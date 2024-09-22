@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KEYPAD EDITOR</title>
+    <style>
+        *{
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #121212;
+            color: #ffffff;
+        }
+        .container {
+            display: flex;
+            height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .toolbox, .control-panel, .style-panel {
+            width: 250px;
+            background-color: #1e1e1e;
+            padding: 10px;
+            border-radius: 5px;
+            margin-right: 10px;
+        }
+        .canvas-container {
+            flex-grow: 1;
+            position: relative;
+            overflow: hidden;
+            background-color: #2a2a2a;
+            border-radius: 5px;
+        }
+        .canvas {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #333333;
+        }
+        .control {
+            position: absolute;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: move;
+            user-select: none;
+        }
+        .joystick {
+            border-radius: 50%;
+        }
+        .joystick, .button, .mousezone {
+            background-color: #4a4a4a;
+            border: 1px solid #666666;
+        }
+        button {
+            background-color: #333333;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 14px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        input[type="number"], input[type="text"], select {
+            width: 100%;
+            padding: 5px;
+            margin: 5px 0;
+            background-color: #2a2a2a;
+            border: 1px solid #4a4a4a;
+            color: white;
+        }
+        label {
+            display: block;
+            margin-top: 10px;
+        }
+        .shortcut-info {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            background-color: rgba(0,0,0,0.7);
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="toolbox">
+            <h2>Controls</h2>
+            <button onclick="addControl('Joystick')">Add Joystick</button>
+            <button onclick="addControl('Button')">Add Button</button>
+            <button onclick="addControl('MouseZone')">Add Mouse Zone</button>
+        </div>
+        <div class="canvas-container">
+            <div id="canvas" class="canvas"></div>
+        </div>
+        <div class="control-panel">
+            <h2>Canvas Size</h2>
+            <input type="number" id="canvasWidth" value="320" onchange="resizeCanvas()">
+            <input type="number" id="canvasHeight" value="480" onchange="resizeCanvas()">
+            <h2>Actions</h2>
+            <button onclick="undo()">Undo</button>
+            <button onclick="redo()">Redo</button>
+            <button onclick="zoomIn()">Zoom In</button>
+            <button onclick="zoomOut()">Zoom Out</button>
+            <button onclick="exportLayout()">Export</button>
+            <input type="file" id="importFile" style="display: none;" onchange="importLayout(event)">
+            <button onclick="document.getElementById('importFile').click()">Import</button>
+            <button onclick="apply()">Apply</button>
+        </div>
+        <div class="style-panel">
+            <h2>Style Panel</h2>
+            <div id="styleOptions"></div>
+        </div>
+    </div>
+    <div class="shortcut-info">
+        Shortcuts: Undo (Ctrl+Z) | Redo (Ctrl+Shift+Z) | Save (Ctrl+S) | Open (Ctrl+O) | Zoom (Scroll) | Apply (Ctrl+Enter)
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const styleOptions = document.getElementById('styleOptions');
+        let controls = [];
+        let undoStack = [];
+        let redoStack = [];
+        let zoom = 1;
+        let draggedControl = null;
+        let offsetX, offsetY;
+        let selectedControl = null;
+
+        function addControl(type) {
+            const control = document.createElement('div');
+            control.className = `control ${type.toLowerCase()}`;
+            control.textContent = type[0];
+            control.style.left = '50px';
+            control.style.top = '50px';
+            control.style.width = '50px';
+            control.style.height = '50px';
+            control.setAttribute('data-type', type);
+            
+            if (type === 'Button') {
+                control.setAttribute('data-key', '');
+            }
+            
+            control.addEventListener('mousedown', startDragging);
+            control.addEventListener('touchstart', startDragging);
+            control.addEventListener('click', selectControl);
+            
+            canvas.appendChild(control);
+            controls.push(control);
+            saveState();
+        }
+
+        function startDragging(e) {
+            e.preventDefault();
+            draggedControl = e.target;
+            const rect = draggedControl.getBoundingClientRect();
+            offsetX = (e.clientX || e.touches[0].clientX) - rect.left;
+            offsetY = (e.clientY || e.touches[0].clientY) - rect.top;
+
+            document.addEventListener('mousemove', drag);
+            document.addEventListener('touchmove', drag);
+            document.addEventListener('mouseup', stopDragging);
+            document.addEventListener('touchend', stopDragging);
+        }
+
+        function drag(e) {
+            if (!draggedControl) return;
+            
+            const canvasRect = canvas.getBoundingClientRect();
+            const x = (e.clientX || e.touches[0].clientX) - canvasRect.left - offsetX;
+            const y = (e.clientY || e.touches[0].clientY) - canvasRect.top - offsetY;
+            const realX = x / zoom;
+            const realY = y / zoom;
+
+            draggedControl.style.left = `${realX}px`;
+            draggedControl.style.top = `${realY}px`;
+        }
+
+        function stopDragging() {
+            draggedControl = null;
+            document.removeEventListener('mousemove', drag);
+            document.removeEventListener('touchmove', drag);
+            document.removeEventListener('mouseup', stopDragging);
+            document.removeEventListener('touchend', stopDragging);
+            saveState();
+        }
+
+        function selectControl(e) {
+            selectedControl = e.target;
+            updateStylePanel();
+        }
+
+        function updateStylePanel() {
+            if (!selectedControl) {
+                styleOptions.innerHTML = '<p>Select a control to edit its style</p>';
+                return;
+            }
+
+            const type = selectedControl.getAttribute('data-type');
+            let html = `
+                <h3>${type} Style</h3>
+                <label>Width:
+                    <input type="number" id="controlWidth" value="${selectedControl.offsetWidth}" onchange="updateControlStyle(event, 'width', this.value + 'px')">
+                </label>
+                <label>Height:
+                    <input type="number" id="controlHeight" value="${selectedControl.offsetHeight}" onchange="updateControlStyle(event, 'height', this.value + 'px')">
+                </label>
+                <label>Border Radius:
+                    <input type="number" id="controlRadius" value="${selectedControl.style.borderRadius.replace('px', '')}" onchange="updateControlStyle(event, 'borderRadius', this.value + 'px')">
+                </label>
+                <label>Rotation:
+                    <input type="number" id="controlRotation" value="${selectedControl.style.transform.replace('rotate(', '').replace('deg)', '') || 0}" onchange="updateControlStyle(event, 'transform', 'rotate(' + this.value + 'deg)')">
+                </label>
+            `;
+
+            if (type === 'Button') {
+                html += `
+                    <label>Key Bind:
+                        <input type="text" id="controlKey" value="${selectedControl.getAttribute('data-key')}" onkeydown="updateControlStyle(event, 'key', this)" placeholder="Keybind">
+                    </label>
+                `;
+            }
+
+            styleOptions.innerHTML = html;
+        }
+
+        function updateControlStyle(e, property, value) {
+            if (!selectedControl) return;
+
+            if (property === 'key') {
+                e.preventDefault();
+                if(e.code === 'Backspace') {
+                    selectedControl.setAttribute('data-key', '');
+                    selectedControl.textContent = selectedControl.getAttribute('data-type')[0];
+                    value.value = '';
+                    return;
+                }
+                selectedControl.setAttribute('data-key', e.code);
+                selectedControl.textContent = e.code || selectedControl.getAttribute('data-type')[0];
+                value.value = e.code;
+            } else {
+                selectedControl.style[property] = value;
+            }
+            saveState();
+        }
+
+        function resizeCanvas() {
+            const width = document.getElementById('canvasWidth').value;
+            const height = document.getElementById('canvasHeight').value;
+            canvas.style.width = `${width}px`;
+            canvas.style.height = `${height}px`;
+            saveState();
+        }
+
+        function zoomIn() {
+            zoom *= 1.1;
+            canvas.style.transform = `translate(-50%, -50%) scale(${zoom})`;
+        }
+
+        function zoomOut() {
+            zoom /= 1.1;
+            canvas.style.transform = `translate(-50%, -50%) scale(${zoom})`;
+        }
+
+        function saveState() {
+            const state = {
+                controls: controls.map(control => ({
+                    type: control.getAttribute('data-type'),
+                    left: control.style.left,
+                    top: control.style.top,
+                    width: control.style.width,
+                    height: control.style.height,
+                    borderRadius: control.style.borderRadius,
+                    transform: control.style.transform,
+                    key: control.getAttribute('data-key')
+                })),
+                canvasSize: {
+                    width: canvas.style.width,
+                    height: canvas.style.height
+                }
+            };
+            undoStack.push(JSON.stringify(state));
+            redoStack = [];
+        }
+
+        function undo() {
+            if (undoStack.length > 1) {
+                redoStack.push(undoStack.pop());
+                const state = JSON.parse(undoStack[undoStack.length - 1]);
+                loadState(state);
+            }
+        }
+
+        function redo() {
+            if (redoStack.length > 0) {
+                const state = JSON.parse(redoStack.pop());
+                undoStack.push(JSON.stringify(state));
+                loadState(state);
+            }
+        }
+
+        function loadState(state) {
+            canvas.innerHTML = '';
+            controls = [];
+            state.controls.forEach(controlState => {
+                const control = document.createElement('div');
+                control.className = `control ${controlState.type.toLowerCase()}`;
+                control.textContent = controlState.key || controlState.type[0];
+                control.style.left = controlState.left;
+                control.style.top = controlState.top;
+                control.style.width = controlState.width;
+                control.style.height = controlState.height;
+                control.style.borderRadius = controlState.borderRadius;
+                control.style.transform = controlState.transform;
+                control.setAttribute('data-type', controlState.type);
+                control.setAttribute('data-key', controlState.key || '');
+                control.addEventListener('mousedown', startDragging);
+                control.addEventListener('touchstart', startDragging);
+                control.addEventListener('click', selectControl);
+                canvas.appendChild(control);
+                controls.push(control);
+            });
+            canvas.style.width = state.canvasSize.width;
+            canvas.style.height = state.canvasSize.height;
+            document.getElementById('canvasWidth').value = parseInt(state.canvasSize.width);
+            document.getElementById('canvasHeight').value = parseInt(state.canvasSize.height);
+            selectedControl = null;
+            updateStylePanel();
+        }
+
+        function exportLayout() {
+            const state = JSON.parse(undoStack[undoStack.length - 1]);
+            const blob = new Blob([JSON.stringify(state, null, 2)], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'keypad_layout.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function importLayout(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const state = JSON.parse(e.target.result);
+                    loadState(state);
+                    saveState();
+                };
+                reader.readAsText(file);
+            }
+        }
+
+        function apply(){
+            fetch('/api/update', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(JSON.parse(undoStack[undoStack.length - 1]))
+            });
+        }
+
+        function handleKeyboardShortcuts(e) {
+            if (e.ctrlKey) {
+                switch (e.key.toLowerCase()) {
+                    case 'z':
+                        if (e.shiftKey) {
+                            e.preventDefault();
+                            redo();
+                        } else {
+                            e.preventDefault();
+                            undo();
+                        }
+                        break;
+                    case 's':
+                        e.preventDefault();
+                        exportLayout();
+                        break;
+                    case 'o':
+                        e.preventDefault();
+                        document.getElementById('importFile').click();
+                        break;
+                }
+            }
+        }
+
+        function handleScroll(e) {
+            e.preventDefault();
+            if (e.deltaY < 0) {
+                zoomIn();
+            } else {
+                zoomOut();
+            }
+        }
+
+        function zoomIn() {
+            zoom *= 1.1;
+            applyZoom();
+        }
+
+        function zoomOut() {
+            zoom /= 1.1;
+            applyZoom();
+        }
+
+        function applyZoom() {
+            canvas.style.transform = `translate(-50%, -50%) scale(${zoom})`;
+        }
+
+        // Event listeners
+        document.addEventListener('keydown', handleKeyboardShortcuts);
+        canvas.addEventListener('wheel', handleScroll);
+
+        // Initialize
+        resizeCanvas();
+        saveState();
+    </script>
+</body>
+</html>
