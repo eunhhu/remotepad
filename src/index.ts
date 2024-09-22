@@ -2,8 +2,9 @@ import express from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import path from 'path';
-import {Key, keyboard, mouse} from '@nut-tree-fork/nut-js';
+import {Key, keyboard, mouse, Point} from '@nut-tree-fork/nut-js';
 import { readFileSync, writeFileSync } from 'fs';
+import { keymap } from './keymap';
 
 keyboard.config.autoDelayMs = 0;
 mouse.config.autoDelayMs = 0;
@@ -36,6 +37,29 @@ app.post('/api/update', (req, res) => {
 
 io.on('connection', (socket) => {
     console.log('a user connected');
+    socket.on('log', (...args:any[]) => {
+        console.log('[Client]', ...args);
+    })
+    socket.on('buttonPress', (data) => {
+        console.log(`buttonPress: ${data.id} ${data.key}`);
+        keyboard.pressKey(keymap[data.key]);
+    });
+    socket.on('buttonRelease', (data) => {
+        console.log(`buttonRelease: ${data.id} ${data.key}`);
+        keyboard.releaseKey(keymap[data.key]);
+    });
+    socket.on('joystickMove', async (data) => {
+        console.log(`joystickMove: ${data.id} ${data.angle} ${data.distance}`);
+        const x = Math.cos(data.angle) * data.distance;
+        const y = Math.sin(data.angle) * data.distance;
+        const mousePos = await mouse.getPosition();
+        mouse.move([new Point(mousePos.x + x, mousePos.y + y)]);
+    });
+    socket.on('mouseZoneMove', async (data) => {
+        console.log(`mouseZoneMove: ${data.id} ${data.x} ${data.y}`);
+        const mousePos = await mouse.getPosition();
+        mouse.move([new Point(mousePos.x + data.x, mousePos.y + data.y)]);
+    });
     socket.on('disconnect', () => {
         console.log('user disconnected');
     });

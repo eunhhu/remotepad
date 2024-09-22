@@ -40,6 +40,7 @@
         }
         .joystick {
             background-color: rgba(74, 74, 74, 0.3);
+            border-radius: 50%;
             border: 1px solid #666666;
         }
         .joystick-knob {
@@ -53,151 +54,179 @@
             background-color: rgba(74, 74, 74, 0.1);
             border: 1px solid #666666;
         }
+        #full{
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+            padding: 10px;
+            background-color: #4a4a4a;
+            color: #ffffff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
+    <button id="full">Full Screen</button>
     <div id="keypad"></div>
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        // Initialize Socket.io
-        const socket = io();
+        const main = async () => {
 
-        // Layout data
-        const layoutData = {"controls":[{"type":"Joystick","left":"153.56px","top":"479.96px","width":"500px","height":"500px","borderRadius":"","transform":"","key":null},{"type":"Button","left":"2055.43px","top":"401.481px","width":"200px","height":"200px","borderRadius":"100px","transform":"","key":"KeyX"},{"type":"Button","left":"1992.66px","top":"734.159px","width":"200px","height":"200px","borderRadius":"100px","transform":"","key":"KeyZ"},{"type":"MouseZone","left":"768.668px","top":"100.219px","width":"900px","height":"900px","borderRadius":"","transform":"","key":null}],"canvasSize":{"width":"2340px","height":"1080px"}};
-
-        const keypad = document.getElementById('keypad');
-        keypad.style.width = layoutData.canvasSize.width;
-        keypad.style.height = layoutData.canvasSize.height;
-
-        // Function to scale the keypad to fit the screen
-        function scaleKeypad() {
-            const scaleX = window.innerWidth / keypad.offsetWidth;
-            const scaleY = window.innerHeight / keypad.offsetHeight;
-            const scale = Math.min(scaleX, scaleY);
-            keypad.style.transform = `scale(${scale})`;
-        }
-
-        // Create controls based on layout data
-        layoutData.controls.forEach((controlData, index) => {
-            const control = document.createElement('div');
-            control.className = `control ${controlData.type.toLowerCase()}`;
-            control.id = `${controlData.type.toLowerCase()}-${index}`;
-            control.style.left = controlData.left;
-            control.style.top = controlData.top;
-            control.style.width = controlData.width;
-            control.style.height = controlData.height;
-            if (controlData.borderRadius) control.style.borderRadius = controlData.borderRadius;
-            if (controlData.transform) control.style.transform = controlData.transform;
-
-            if (controlData.type === 'Button') {
-                control.textContent = controlData.key.replace('Key', '');
-                control.addEventListener('touchstart', handleButtonPress);
-                control.addEventListener('touchend', handleButtonRelease);
-            } else if (controlData.type === 'Joystick') {
-                const knob = document.createElement('div');
-                knob.className = 'joystick-knob';
-                control.appendChild(knob);
-                control.addEventListener('touchstart', handleJoystickStart);
-                control.addEventListener('touchmove', handleJoystickMove);
-                control.addEventListener('touchend', handleJoystickEnd);
-            } else if (controlData.type === 'MouseZone') {
-                control.addEventListener('touchmove', handleMouseZoneMove);
-                control.addEventListener('touchend', handleMouseZoneEnd);
-            }
-
-            keypad.appendChild(control);
-        });
-
-        // Button handlers
-        function handleButtonPress(event) {
-            event.preventDefault();
-            this.classList.add('active');
-            socket.emit('buttonPress', { id: this.id, key: this.id.split('-')[1] });
-        }
-
-        function handleButtonRelease(event) {
-            event.preventDefault();
-            this.classList.remove('active');
-            socket.emit('buttonRelease', { id: this.id, key: this.id.split('-')[1] });
-        }
-
-        // Joystick handlers
-        function handleJoystickStart(event) {
-            event.preventDefault();
-            this.touching = true;
-            handleJoystickMove.call(this, event);
-        }
-
-        function handleJoystickMove(event) {
-            event.preventDefault();
-            if (!this.touching) return;
-
-            const touch = event.touches[0];
-            const rect = this.getBoundingClientRect();
-            const knob = this.querySelector('.joystick-knob');
-
-            let deltaX = touch.clientX - (rect.left + rect.width / 2);
-            let deltaY = touch.clientY - (rect.top + rect.height / 2);
-
-            const distance = Math.min(Math.sqrt(deltaX * deltaX + deltaY * deltaY), rect.width / 2);
-            const angle = Math.atan2(deltaY, deltaX);
-
-            const knobX = Math.cos(angle) * distance;
-            const knobY = Math.sin(angle) * distance;
-
-            knob.style.transform = `translate(${knobX}px, ${knobY}px)`;
-
-            socket.emit('joystickMove', {
-                id: this.id,
-                angle: angle,
-                distance: distance / (rect.width / 2)
+            // Initialize Socket.io
+            const socket = io();
+            const log = (...args) => socket.emit('log', ...args);
+    
+            document.getElementById('full').addEventListener('touchstart', () => {
+                document.documentElement.requestFullscreen();
+                if(document.fullscreenElement){
+                    document.getElementById('full').style.display = 'none';
+                    log('Full Screen');
+                }
             });
-        }
-
-        function handleJoystickEnd(event) {
-            event.preventDefault();
-            this.touching = false;
-            const knob = this.querySelector('.joystick-knob');
-            knob.style.transform = 'translate(0, 0)';
-            socket.emit('joystickEnd', { id: this.id });
-        }
-
-        // Mouse zone handlers
-        let lastX, lastY;
-
-        function handleMouseZoneMove(event) {
-            event.preventDefault();
-            const touch = event.touches[0];
-            if (lastX === undefined) {
+    
+            // Layout data
+            const layoutData = await fetch('save.json').then(response => response.json());
+    
+            const keypad = document.getElementById('keypad');
+            keypad.style.width = layoutData.canvasSize.width;
+            keypad.style.height = layoutData.canvasSize.height;
+    
+            // Function to scale the keypad to fit the screen
+            function scaleKeypad() {
+                const scaleX = window.innerWidth / keypad.offsetWidth;
+                const scaleY = window.innerHeight / keypad.offsetHeight;
+                const scale = Math.min(scaleX, scaleY);
+                keypad.style.transform = `scale(${scale})`;
+            }
+    
+            // Create controls based on layout data
+            layoutData.controls.forEach((controlData, index) => {
+                const control = document.createElement('div');
+                control.className = `control ${controlData.type.toLowerCase()}`;
+                control.id = `${controlData.type.toLowerCase()}-${index}`;
+                control.style.left = controlData.left;
+                control.style.top = controlData.top;
+                control.style.width = controlData.width;
+                control.style.height = controlData.height;
+                if (controlData.borderRadius) control.style.borderRadius = controlData.borderRadius;
+                if (controlData.transform) control.style.transform = controlData.transform;
+    
+                if (controlData.type === 'Button') {
+                    control.textContent = controlData.key;
+                    control.setAttribute('draggable', false);
+                    control.setAttribute('data-key', controlData.key);
+                    control.addEventListener('touchstart', handleButtonPress);
+                    control.addEventListener('touchend', handleButtonRelease);
+                } else if (controlData.type === 'Joystick') {
+                    const knob = document.createElement('div');
+                    knob.className = 'joystick-knob';
+                    control.appendChild(knob);
+                    control.addEventListener('touchstart', handleJoystickStart);
+                    control.addEventListener('touchmove', handleJoystickMove);
+                    control.addEventListener('touchend', handleJoystickEnd);
+                } else if (controlData.type === 'MouseZone') {
+                    control.addEventListener('touchmove', handleMouseZoneMove);
+                    control.addEventListener('touchend', handleMouseZoneEnd);
+                }
+    
+                keypad.appendChild(control);
+            });
+    
+            // Button handlers
+            function handleButtonPress(event) {
+                event.preventDefault();
+                this.classList.add('active');
+                socket.emit('buttonPress', { id: this.id, key: this.getAttribute('data-key') });
+            }
+    
+            function handleButtonRelease(event) {
+                event.preventDefault();
+                this.classList.remove('active');
+                socket.emit('buttonRelease', { id: this.id, key: this.getAttribute('data-key') });;
+            }
+    
+            // Joystick handlers
+            function handleJoystickStart(event) {
+                event.preventDefault();
+                this.touching = true;
+                handleJoystickMove.call(this, event);
+            }
+    
+            function handleJoystickMove(event) {
+                event.preventDefault();
+                if (!this.touching) return;
+    
+                const touch = event.touches[0];
+                const rect = this.getBoundingClientRect();
+                const knob = this.querySelector('.joystick-knob');
+    
+                let deltaX = touch.clientX - (rect.left + rect.width / 2);
+                let deltaY = touch.clientY - (rect.top + rect.height / 2);
+    
+                const distance = Math.min(Math.sqrt(deltaX * deltaX + deltaY * deltaY), rect.width / 2);
+                const angle = Math.atan2(deltaY, deltaX);
+    
+                const knobX = Math.cos(angle) * distance;
+                const knobY = Math.sin(angle) * distance;
+    
+                knob.style.transform = `translate(${knobX}px, ${knobY}px)`;
+    
+                socket.emit('joystickMove', {
+                    id: this.id,
+                    angle: angle,
+                    distance: distance / (rect.width / 2)
+                });
+            }
+    
+            function handleJoystickEnd(event) {
+                event.preventDefault();
+                this.touching = false;
+                const knob = this.querySelector('.joystick-knob');
+                knob.style.transform = 'translate(0, 0)';
+                socket.emit('joystickEnd', { id: this.id });
+            }
+    
+            // Mouse zone handlers
+            let lastX, lastY;
+    
+            function handleMouseZoneMove(event) {
+                event.preventDefault();
+                const touch = event.touches[0];
+                if (lastX === undefined) {
+                    lastX = touch.clientX;
+                    lastY = touch.clientY;
+                    return;
+                }
+    
+                const deltaX = touch.clientX - lastX;
+                const deltaY = touch.clientY - lastY;
+    
                 lastX = touch.clientX;
                 lastY = touch.clientY;
-                return;
+    
+                socket.emit('mouseZoneMove', { id: this.id, deltaX, deltaY });
             }
-
-            const deltaX = touch.clientX - lastX;
-            const deltaY = touch.clientY - lastY;
-
-            lastX = touch.clientX;
-            lastY = touch.clientY;
-
-            socket.emit('mouseZoneMove', { id: this.id, deltaX, deltaY });
+    
+            function handleMouseZoneEnd(event) {
+                event.preventDefault();
+                lastX = undefined;
+                lastY = undefined;
+                socket.emit('mouseZoneEnd', { id: this.id });
+            }
+    
+            // Prevent default touch behavior
+            document.addEventListener('touchstart', (e) => e.preventDefault(), { passive: false });
+            document.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
+    
+            // Scale keypad on load and resize
+            window.addEventListener('load', scaleKeypad);
+            window.addEventListener('resize', scaleKeypad);
         }
-
-        function handleMouseZoneEnd(event) {
-            event.preventDefault();
-            lastX = undefined;
-            lastY = undefined;
-            socket.emit('mouseZoneEnd', { id: this.id });
-        }
-
-        // Prevent default touch behavior
-        document.addEventListener('touchstart', (e) => e.preventDefault(), { passive: false });
-        document.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
-
-        // Scale keypad on load and resize
-        window.addEventListener('load', scaleKeypad);
-        window.addEventListener('resize', scaleKeypad);
+        main();
     </script>
 </body>
 </html>

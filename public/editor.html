@@ -119,6 +119,7 @@
             <input type="file" id="importFile" style="display: none;" onchange="importLayout(event)">
             <button onclick="document.getElementById('importFile').click()">Import</button>
             <button onclick="apply()">Apply</button>
+            <button onclick="load()">Load</button>
         </div>
         <div class="style-panel">
             <h2>Style Panel</h2>
@@ -140,14 +141,14 @@
         let offsetX, offsetY;
         let selectedControl = null;
 
-        function addControl(type) {
+        function addControl(type, style) {
             const control = document.createElement('div');
             control.className = `control ${type.toLowerCase()}`;
             control.textContent = type[0];
-            control.style.left = '50px';
-            control.style.top = '50px';
-            control.style.width = '50px';
-            control.style.height = '50px';
+            control.style.left = style?.left || '50px';
+            control.style.top = style?.top || '50px';   
+            control.style.width = style?.width || '50px';
+            control.style.height = style?.height || '50px';
             control.setAttribute('data-type', type);
             
             if (type === 'Button') {
@@ -234,6 +235,8 @@
                 `;
             }
 
+            html += '<button onclick="deleteControl()">Delete Control</button>';
+
             styleOptions.innerHTML = html;
         }
 
@@ -255,6 +258,25 @@
                 selectedControl.style[property] = value;
             }
             saveState();
+        }
+
+        function deleteControl() {
+            if (!selectedControl) return;
+            canvas.removeChild(selectedControl);
+            controls = controls.filter(control => control !== selectedControl);
+            selectedControl = null;
+            updateStylePanel();
+            saveState();
+        }
+
+        function duplicateControl() {
+            if (!selectedControl) return;
+            addControl(selectedControl.getAttribute('data-type'), {
+                left: `calc(${selectedControl.style.left} + 10px)`,
+                top: `calc(${selectedControl.style.top} + 10px)`,
+                width: selectedControl.style.width,
+                height: selectedControl.style.height,
+            });
         }
 
         function resizeCanvas() {
@@ -375,6 +397,12 @@
             });
         }
 
+        function load(){
+            fetch('save.json').then(response => response.json()).then(data => {
+                loadState(data);
+            });
+        }
+
         function handleKeyboardShortcuts(e) {
             if (e.ctrlKey) {
                 switch (e.key.toLowerCase()) {
@@ -394,6 +422,20 @@
                     case 'o':
                         e.preventDefault();
                         document.getElementById('importFile').click();
+                        break;
+                    case 'd':
+                        e.preventDefault();
+                        duplicateControl();
+                        break;
+                    case 'enter':
+                        e.preventDefault();
+                        apply();
+                        break;
+                }
+            } else {
+                switch (e.key.toLowerCase()) {
+                    case 'delete':
+                        deleteControl();
                         break;
                 }
             }
