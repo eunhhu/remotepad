@@ -1,0 +1,618 @@
+{
+    "canvasSize": {
+        "height": "440px",
+        "width": "915px"
+    },
+    "controls": [
+        {
+            "borderRadius": "",
+            "height": "60px",
+            "key": "Backquote",
+            "left": "0px",
+            "top": "0px",
+            "transform": "",
+            "type": "Button",
+            "width": "60px"
+        },
+        {
+            "borderRadius": "",
+            "height": "60px",
+            "key": "Digit1",
+            "left": "60px",
+            "top": "0px",
+            "transform": "",
+            "type": "Button",
+            "width": "60px"
+        },
+        {
+            "borderRadius": "",
+            "height": "60px",
+            "key": "Digit2",
+            "left": "120px",
+            "top": "0px",
+            "transform": "",
+            "type": "Button",
+            "width": "60px"
+        },
+        {
+            "borderRadius": "",
+            "height": "60px",
+            "key": "Digit3",
+            "left": "180px",
+            "top": "0px",
+            "transform": "",
+            "type": "Button",
+            "width": "60px"
+        },
+        {
+            "borderRadius": "",
+            "height": "60px",
+            "key": "Digit4",
+            "left": "240px",
+            "top": "0px",
+            "transform": "",
+            "type": "Button",
+            "width": "60px"
+        },
+        {
+            "borderRadius": "",
+            "height": "60px",
+            "key": "Digit5",
+            "left": "300px",
+            "top": "0px",
+            "transform": "",
+            "type": "Button",
+            "width": "60px"
+        },
+        {
+            "borderRadius": "",
+            "height": "60px",
+            "key": "Digit6",
+            "left": "360px",
+            "top": "0px",
+            "transform": "",
+            "type": "Button",
+            "width": "60px"
+        },
+        {
+            "borderRadius": "",
+            "height": "60px",
+            "key": "Digit7",
+            "left": "420px",
+            "top": "0px",
+            "transform": "",
+            "type": "Button",
+            "width": "60px"
+        },
+        {
+            "borderRadius": "",
+            "height": "60px",
+            "key": "Digit8",
+            "left": "480px",
+            "top": "0px",
+            "transform": "",
+            "type": "Button",
+            "width": "60px"
+        },
+        {
+            "borderRadius": "",
+            "height": "60px",
+            "key": "Digit9",
+            "left": "540px",
+            "top": "0px",
+            "transform": "",
+            "type": "Button",
+            "width": "60px"
+        },
+        {
+            "borderRadius": "",
+            "height": "60px",
+            "key": "Digit0",
+            "left": "600px",
+            "top": "0px",
+            "transform": "",
+            "type": "Button",
+            "width": "60px"
+        },
+        {
+            "borderRadius": "",
+            "height": "60px",
+            "key": "Minus",
+            "left": "660px",
+            "top": "0px",
+            "transform": "",
+            "type": "Button",
+            "width": "60px"
+        },
+        {
+            "borderRadius": "",
+            "height": "60px",
+            "key": "Equal",
+            "left": "720px",
+            "top": "0px",
+            "transform": "",
+            "type": "Button",
+            "width": "60px"
+        },
+        {
+            "borderRadius": "",
+            "height": "60px",
+            "key": "Backspace",
+            "left": "780px",
+            "top": "0px",
+            "transform": "",
+            "type": "Button",
+            "width": "100px"
+        },
+        {
+            "borderRadius": "",
+            "height": "60px",
+            "key": "Tab",
+            "left": "0px",
+            "top": "60px",
+            "transform": "",
+            "type": "Button",
+            "width": "80px"
+        },
+        {
+            "borderRadius": "",
+            "height": "60px",
+            "key": "KeyQ",
+            "left": "80px",
+            "top": "60px",
+            "transform": "",
+            "type": "Button",
+            "width": "60px"
+        },
+        {
+            "borderRadius": "",
+            "height": "60px",
+            "key": "KeyW",
+            "left": "140px",
+            "top": "60px",
+            "transform": "",
+            "type": "Button",
+            "width": "60px"
+        },
+        {
+            "borderRadius": "",
+            "height": "60px",
+            "key": "KeyE",
+            "left": "200px",
+            "top": "60px",
+            "transform": "",
+            "type": "Button",
+            "width": "60px"
+        },
+        {
+            "borderRadius": "",
+            "height": "60px",
+            "key": "KeyR",
+            "left": "260px",
+            "top": "60px",
+            "transform": "",
+            "type": "Button",
+            "width": "60px"
+        },
+        {
+            "borderRadius": "",
+            "height": "60px",
+            "key": "KeyT",
+            "left": "320px",
+            "top": "60px",
+            "transform": "",
+            "type": "Button",
+            "width": "60px"
+        },
+        {
+            "borderRadius": "",
+            "height": "60px",
+            "key": "KeyY",
+            "left": "380px",
+            "top": "60px",
+            "transform": "",
+            "type": "Button",
+            "width": "60px"
+        },
+        {
+            "borderRadius": "",
+            "height": "60px",
+            "key": "KeyU",
+            "left": "440px",
+            "top": "60px",
+            "transform": "",
+            "type": "Button",
+            "width": "60px"
+        },
+        {
+            "borderRadius": "",
+            "height": "60px",
+            "key": "KeyI",
+            "left": "500px",
+            "top": "60px",
+            "transform": "",
+            "type": "Button",
+            "width": "60px"
+        },
+        {
+            "borderRadius": "",
+            "height": "60px",
+            "key": "KeyO",
+            "left": "560px",
+            "top": "60px",
+            "transform": "",
+            "type": "Button",
+            "width": "60px"
+        },
+        {
+            "borderRadius": "",
+            "height": "60px",
+            "key": "KeyP",
+            "left": "620px",
+            "top": "60px",
+            "transform": "",
+            "type": "Button",
+            "width": "60px"
+        },
+        {
+            "borderRadius": "",
+            "height": "60px",
+            "key": "BracketLeft",
+            "left": "680px",
+            "top": "60px",
+            "transform": "",
+            "type": "Button",
+            "width": "60px"
+        },
+        {
+            "borderRadius": "",
+            "height": "60px",
+            "key": "BracketRight",
+            "left": "740px",
+            "top": "60px",
+            "transform": "",
+            "type": "Button",
+            "width": "60px"
+        },
+        {
+            "borderRadius": "",
+            "height": "60px",
+            "key": "Backslash",
+            "left": "800px",
+            "top": "60px",
+            "transform": "",
+            "type": "Button",
+            "width": "80px"
+        },
+        {
+            "borderRadius": "",
+            "height": "60px",
+            "key": "CapsLock",
+            "left": "0px",
+            "top": "120px",
+            "transform": "",
+            "type": "Button",
+            "width": "100px"
+        },
+        {
+            "borderRadius": "",
+            "height": "60px",
+            "key": "KeyA",
+            "left": "100px",
+            "top": "120px",
+            "transform": "",
+            "type": "Button",
+            "width": "60px"
+        },
+        {
+            "borderRadius": "",
+            "height": "60px",
+            "key": "KeyS",
+            "left": "160px",
+            "top": "120px",
+            "transform": "",
+            "type": "Button",
+            "width": "60px"
+        },
+        {
+            "borderRadius": "",
+            "height": "60px",
+            "key": "KeyD",
+            "left": "220px",
+            "top": "120px",
+            "transform": "",
+            "type": "Button",
+            "width": "60px"
+        },
+        {
+            "borderRadius": "",
+            "height": "60px",
+            "key": "KeyF",
+            "left": "280px",
+            "top": "120px",
+            "transform": "",
+            "type": "Button",
+            "width": "60px"
+        },
+        {
+            "borderRadius": "",
+            "height": "60px",
+            "key": "KeyG",
+            "left": "340px",
+            "top": "120px",
+            "transform": "",
+            "type": "Button",
+            "width": "60px"
+        },
+        {
+            "borderRadius": "",
+            "height": "60px",
+            "key": "KeyH",
+            "left": "400px",
+            "top": "120px",
+            "transform": "",
+            "type": "Button",
+            "width": "60px"
+        },
+        {
+            "borderRadius": "",
+            "height": "60px",
+            "key": "KeyJ",
+            "left": "460px",
+            "top": "120px",
+            "transform": "",
+            "type": "Button",
+            "width": "60px"
+        },
+        {
+            "borderRadius": "",
+            "height": "60px",
+            "key": "KeyK",
+            "left": "520px",
+            "top": "120px",
+            "transform": "",
+            "type": "Button",
+            "width": "60px"
+        },
+        {
+            "borderRadius": "",
+            "height": "60px",
+            "key": "KeyL",
+            "left": "580px",
+            "top": "120px",
+            "transform": "",
+            "type": "Button",
+            "width": "60px"
+        },
+        {
+            "borderRadius": "",
+            "height": "60px",
+            "key": "Semicolon",
+            "left": "640px",
+            "top": "120px",
+            "transform": "",
+            "type": "Button",
+            "width": "60px"
+        },
+        {
+            "borderRadius": "",
+            "height": "60px",
+            "key": "Quote",
+            "left": "700px",
+            "top": "120px",
+            "transform": "",
+            "type": "Button",
+            "width": "60px"
+        },
+        {
+            "borderRadius": "",
+            "height": "60px",
+            "key": "Enter",
+            "left": "760px",
+            "top": "120px",
+            "transform": "",
+            "type": "Button",
+            "width": "120px"
+        },
+        {
+            "borderRadius": "",
+            "height": "60px",
+            "key": "ShiftLeft",
+            "left": "0px",
+            "top": "180px",
+            "transform": "",
+            "type": "Button",
+            "width": "120px"
+        },
+        {
+            "borderRadius": "",
+            "height": "60px",
+            "key": "KeyZ",
+            "left": "120px",
+            "top": "180px",
+            "transform": "",
+            "type": "Button",
+            "width": "60px"
+        },
+        {
+            "borderRadius": "",
+            "height": "60px",
+            "key": "KeyX",
+            "left": "180px",
+            "top": "180px",
+            "transform": "",
+            "type": "Button",
+            "width": "60px"
+        },
+        {
+            "borderRadius": "",
+            "height": "60px",
+            "key": "KeyC",
+            "left": "240px",
+            "top": "180px",
+            "transform": "",
+            "type": "Button",
+            "width": "60px"
+        },
+        {
+            "borderRadius": "",
+            "height": "60px",
+            "key": "KeyV",
+            "left": "300px",
+            "top": "180px",
+            "transform": "",
+            "type": "Button",
+            "width": "60px"
+        },
+        {
+            "borderRadius": "",
+            "height": "60px",
+            "key": "KeyB",
+            "left": "360px",
+            "top": "180px",
+            "transform": "",
+            "type": "Button",
+            "width": "60px"
+        },
+        {
+            "borderRadius": "",
+            "height": "60px",
+            "key": "KeyN",
+            "left": "420px",
+            "top": "180px",
+            "transform": "",
+            "type": "Button",
+            "width": "60px"
+        },
+        {
+            "borderRadius": "",
+            "height": "60px",
+            "key": "KeyM",
+            "left": "480px",
+            "top": "180px",
+            "transform": "",
+            "type": "Button",
+            "width": "60px"
+        },
+        {
+            "borderRadius": "",
+            "height": "60px",
+            "key": "Comma",
+            "left": "540px",
+            "top": "180px",
+            "transform": "",
+            "type": "Button",
+            "width": "60px"
+        },
+        {
+            "borderRadius": "",
+            "height": "60px",
+            "key": "Period",
+            "left": "600px",
+            "top": "180px",
+            "transform": "",
+            "type": "Button",
+            "width": "60px"
+        },
+        {
+            "borderRadius": "",
+            "height": "60px",
+            "key": "Slash",
+            "left": "660px",
+            "top": "180px",
+            "transform": "",
+            "type": "Button",
+            "width": "60px"
+        },
+        {
+            "borderRadius": "",
+            "height": "60px",
+            "key": "ShiftRight",
+            "left": "720px",
+            "top": "180px",
+            "transform": "",
+            "type": "Button",
+            "width": "160px"
+        },
+        {
+            "borderRadius": "",
+            "height": "60px",
+            "key": "ControlLeft",
+            "left": "0px",
+            "top": "240px",
+            "transform": "",
+            "type": "Button",
+            "width": "80px"
+        },
+        {
+            "borderRadius": "",
+            "height": "60px",
+            "key": "MetaLeft",
+            "left": "80px",
+            "top": "240px",
+            "transform": "",
+            "type": "Button",
+            "width": "80px"
+        },
+        {
+            "borderRadius": "",
+            "height": "60px",
+            "key": "AltLeft",
+            "left": "160px",
+            "top": "240px",
+            "transform": "",
+            "type": "Button",
+            "width": "80px"
+        },
+        {
+            "borderRadius": "",
+            "height": "60px",
+            "key": "Space",
+            "left": "240px",
+            "top": "240px",
+            "transform": "",
+            "type": "Button",
+            "width": "400px"
+        },
+        {
+            "borderRadius": "",
+            "height": "60px",
+            "key": "AltRight",
+            "left": "640px",
+            "top": "240px",
+            "transform": "",
+            "type": "Button",
+            "width": "80px"
+        },
+        {
+            "borderRadius": "",
+            "height": "60px",
+            "key": "MetaRight",
+            "left": "720px",
+            "top": "240px",
+            "transform": "",
+            "type": "Button",
+            "width": "80px"
+        },
+        {
+            "borderRadius": "",
+            "height": "60px",
+            "key": "ControlRight",
+            "left": "800px",
+            "top": "240px",
+            "transform": "",
+            "type": "Button",
+            "width": "80px"
+        },
+        {
+            "borderRadius": "",
+            "height": "120px",
+            "key": "",
+            "left": "240px",
+            "top": "310px",
+            "transform": "",
+            "type": "MouseZone",
+            "width": "400px"
+        }
+    ]
+}
