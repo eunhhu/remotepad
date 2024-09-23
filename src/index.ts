@@ -2,7 +2,7 @@ import express from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import path from 'path';
-import {Key, keyboard, mouse, Point} from '@nut-tree-fork/nut-js';
+import {Button, Key, keyboard, mouse, Point} from '@nut-tree-fork/nut-js';
 import { readFileSync, writeFileSync } from 'fs';
 import { keymap } from './keymap';
 
@@ -41,24 +41,27 @@ io.on('connection', (socket) => {
         console.log('[Client]', ...args);
     })
     socket.on('buttonPress', (data) => {
-        console.log(`buttonPress: ${data.id} ${data.key}`);
         keyboard.pressKey(keymap[data.key]);
     });
     socket.on('buttonRelease', (data) => {
-        console.log(`buttonRelease: ${data.id} ${data.key}`);
         keyboard.releaseKey(keymap[data.key]);
     });
     socket.on('joystickMove', async (data) => {
-        console.log(`joystickMove: ${data.id} ${data.angle} ${data.distance}`);
-        const x = Math.cos(data.angle) * data.distance;
-        const y = Math.sin(data.angle) * data.distance;
+        const x = Math.cos(data.angle) * data.distance * 10;
+        const y = Math.sin(data.angle) * data.distance * 10;
         const mousePos = await mouse.getPosition();
-        mouse.move([new Point(mousePos.x + x, mousePos.y + y)]);
+        mouse.setPosition(new Point(mousePos.x + x, mousePos.y + y));
     });
     socket.on('mouseZoneMove', async (data) => {
-        console.log(`mouseZoneMove: ${data.id} ${data.x} ${data.y}`);
         const mousePos = await mouse.getPosition();
-        mouse.move([new Point(mousePos.x + data.x, mousePos.y + data.y)]);
+        mouse.setPosition(new Point(mousePos.x + data.deltaX, mousePos.y + data.deltaY));
+    });
+    socket.on('mouseZoneClick', async (data) => {
+        if (data.button === 'left') {
+            mouse.click(Button.LEFT);
+        } else if (data.button === 'right') {
+            mouse.click(Button.RIGHT);
+        }
     });
     socket.on('disconnect', () => {
         console.log('user disconnected');
@@ -67,4 +70,5 @@ io.on('connection', (socket) => {
 
 http.listen(PORT, () => {
     console.log(`listening on *:${PORT}`);
+    console.log(`you can access editor at http://localhost:${PORT}/editor`);
 });

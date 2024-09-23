@@ -93,7 +93,7 @@ export const keymap:{[key:string]:Key} = {
     'Numpad9': Key.NumPad9,
     'Numpad0': Key.NumPad0,
     'NumpadDecimal': Key.Decimal,
-    'Backquote': Key.Backspace,
+    'Backquote': Key.Grave,
     'Minus': Key.Minus,
     'Equal': Key.Equal,
     'BracketLeft': Key.LeftBracket,

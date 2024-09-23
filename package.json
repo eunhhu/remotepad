@@ -7,7 +7,7 @@
     "start": "ts-node src/index.ts",
     "dev": "nodemon --exec ts-node src/index.ts",
     "dev:watch": "concurrently \"npm run dev\" \"tsc -w\"",
-    "build": "tsc -p ."
+    "build": "tsc -p . && pkg . --out-path bin"
   },
   "keywords": [],
   "author": "",
@@ -17,6 +17,7 @@
     "@types/node": "^22.5.5",
     "concurrently": "^9.0.1",
     "nodemon": "^3.1.7",
+    "pkg": "^5.8.1",
     "ts-node": "^10.9.2",
     "typescript": "^5.6.2"
   },
@@ -24,5 +25,21 @@
     "@nut-tree-fork/nut-js": "^4.2.2",
     "express": "^4.21.0",
     "socket.io": "^4.8.0"
+  },
+  "pkg":{
+    "scripts": [
+      "dist/**/*.js"
+    ],
+    "assets": [
+      "public/**/*"
+    ],
+    "targets": [
+      "node18-win-x64",
+      "node18-linux-x64",
+      "node18-macos-x64"
+    ]
+  },
+  "bin":{
+    "app": "dist/index.js"
   }
 }

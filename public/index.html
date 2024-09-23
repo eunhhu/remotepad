@@ -34,6 +34,7 @@
             border: 1px solid #666666;
             font-size: 24px;
             font-weight: bold;
+            overflow: hidden;
         }
         .button.active {
             background-color: #666666;
@@ -129,6 +130,7 @@
                     control.addEventListener('touchmove', handleJoystickMove);
                     control.addEventListener('touchend', handleJoystickEnd);
                 } else if (controlData.type === 'MouseZone') {
+                    control.addEventListener('touchstart', handleMouseZoneStart);
                     control.addEventListener('touchmove', handleMouseZoneMove);
                     control.addEventListener('touchend', handleMouseZoneEnd);
                 }
@@ -191,7 +193,18 @@
             }
     
             // Mouse zone handlers
-            let lastX, lastY;
+            let lastX, lastY, lastStartTime, startX, startY;
+
+            function handleMouseZoneStart(event) {
+                event.preventDefault();
+                const touch = event.touches[0];
+                console.log(touch);
+                startX = touch.clientX;
+                startY = touch.clientY;
+                lastX = touch.clientX;
+                lastY = touch.clientY;
+                lastStartTime = Date.now();
+            }
     
             function handleMouseZoneMove(event) {
                 event.preventDefault();
@@ -213,9 +226,17 @@
     
             function handleMouseZoneEnd(event) {
                 event.preventDefault();
+                const deltaX = startX - lastX;
+                const deltaY = startY - lastY;
+                startX = undefined;
+                startY = undefined;
                 lastX = undefined;
                 lastY = undefined;
                 socket.emit('mouseZoneEnd', { id: this.id });
+                const deltaT = Date.now() - lastStartTime;
+                if(deltaX < 2 && deltaY < 2 && deltaT < 200){
+                    socket.emit('mouseZoneClick', { id: this.id, button:'left' });
+                }
             }
     
             // Prevent default touch behavior
