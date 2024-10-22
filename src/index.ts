@@ -63,6 +63,30 @@ io.on('connection', (socket) => {
             mouse.click(Button.RIGHT);
         }
     });
+    socket.on('mouseMove', async (data) => {
+        const mouseCurPos = await mouse.getPosition();
+        const x = data.alpha * 10;
+        const y = data.beta * 10;
+        mouse.setPosition(new Point(mouseCurPos.x + x, mouseCurPos.y + y));
+    })
+    socket.on('mousePress', (data) => {
+        if (data.button === 'left') {
+            mouse.pressButton(Button.LEFT);
+        } else if (data.button === 'right') {
+            mouse.pressButton(Button.RIGHT);
+        }
+    });
+    socket.on('mouseRelease', (data) => {
+        if (data.button === 'left') {
+            mouse.releaseButton(Button.LEFT);
+        } else if (data.button === 'right') {
+            mouse.releaseButton(Button.RIGHT);
+        }
+    });
+    socket.on('mouseScroll', (data) => {
+        mouse.scrollDown(data.deltaY);
+        mouse.scrollRight(data.deltaX);
+    });
     socket.on('disconnect', () => {
         console.log('user disconnected');
     });
