@@ -47,9 +47,22 @@
         .selected{
             background: #9f9 !important;
         }
+        #full{
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+            padding: 10px;
+            background-color: #4a4a4a;
+            color: #ffffff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
+    <button id="full">Full Screen</button>
     <div id="container" class="jc g2 ic p2 full">
         <div id="row" class="jc g2 ic full">
             <div id="left" class="full"></div>
@@ -59,6 +72,13 @@
     </div>
     <script src="/socket.io/socket.io.js"></script>
     <script>
+        document.getElementById('full').addEventListener('touchstart', () => {
+            document.documentElement.requestFullscreen();
+            if(document.fullscreenElement){
+                document.getElementById('full').style.display = 'none';
+                log('Full Screen');
+            }
+        });
         const container = document.getElementById('container');
         const row = document.getElementById('row');
         const left = document.getElementById('left');
@@ -101,7 +121,9 @@
             lastAlpha = alpha;
             lastBeta = beta;
             lastGamma = gamma;
-            if(socket && isOn) socket.emit('mouseMove', { alpha:alphaDiff, beta:betaDiff, gamma:gammaDiff });
+            if(socket && isOn) {
+                socket.emit('mouseMove', { alpha:alphaDiff, beta:betaDiff, gamma:gammaDiff });
+            }
         })
         const resize = () => {
             const isSero = innerWidth < innerHeight;
