@@ -72,6 +72,8 @@
     </div>
     <script src="/socket.io/socket.io.js"></script>
     <script>
+        let socket = io();
+        const log = (...args) => socket.emit('log', ...args);
         document.getElementById('full').addEventListener('touchstart', () => {
             document.documentElement.requestFullscreen();
             if(document.fullscreenElement){
@@ -84,20 +86,26 @@
         const left = document.getElementById('left');
         const right = document.getElementById('right');
         const switcher = document.getElementById('switch');
-        let socket = io();
         let lastAlpha = 0;
         let lastBeta = 0;
         let lastGamma = 0;
         let isOn = false;
         switcher.addEventListener('touchstart', e => {
+            navigator.vibrate(5);
             isOn = !isOn;
             switcher.classList.toggle('selected', isOn)
         })
         left.addEventListener('touchstart', e => {
-            if(socket && isOn) socket.emit("mousePress", {button:"left"})
+            if(socket && isOn) {
+                navigator.vibrate(5);
+                socket.emit("mousePress", {button:"left"})
+            }
         })
         right.addEventListener('touchstart', e => {
-            if(socket && isOn) socket.emit("mousePress", {button:"right"})
+        if(socket && isOn){
+                navigator.vibrate(5);
+                socket.emit("mousePress", {button:"right"})
+            }
         })
         left.addEventListener('touchend', e => {
             if(socket && isOn) socket.emit("mouseRelease", {button:"left"})
@@ -105,7 +113,7 @@
         right.addEventListener('touchend', e => {
             if(socket && isOn) socket.emit("mouseRelease", {button:"right"})
         })
-        window.addEventListener('deviceorientation', function(event) {
+        window.addEventListener('deviceorientation', (event) => {
             let alpha = event.alpha;
             let beta = event.beta;
             let gamma = event.gamma;
@@ -122,7 +130,12 @@
             lastBeta = beta;
             lastGamma = gamma;
             if(socket && isOn) {
-                socket.emit('mouseMove', { alpha:alphaDiff, beta:betaDiff, gamma:gammaDiff });
+                socket.emit('mouseMove', { x:-alphaDiff, y:-betaDiff });
+            }
+        })
+        window.addEventListener('devicemotion', event => {
+            if(socket && isOn) {
+                // socket.emit('mouseMove', { x: event.acceleration.x, y: event.acceleration.z });
             }
         })
         const resize = () => {

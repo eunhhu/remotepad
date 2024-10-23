@@ -24,9 +24,10 @@
   "dependencies": {
     "@nut-tree-fork/nut-js": "^4.2.2",
     "express": "^4.21.0",
+    "robotjs": "^0.6.0",
     "socket.io": "^4.8.0"
   },
-  "pkg":{
+  "pkg": {
     "scripts": [
       "dist/**/*.js"
     ],
@@ -39,7 +40,7 @@
       "node18-macos-x64"
     ]
   },
-  "bin":{
+  "bin": {
     "app": "dist/index.js"
   }
 }

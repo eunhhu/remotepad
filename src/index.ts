@@ -5,10 +5,12 @@ import path from 'path';
 import {Button, Key, keyboard, mouse, Point} from '@nut-tree-fork/nut-js';
 import { readFileSync, writeFileSync } from 'fs';
 import { keymap } from './keymap';
+import robot from 'robotjs';
 
 keyboard.config.autoDelayMs = 0;
 mouse.config.autoDelayMs = 0;
 mouse.config.mouseSpeed = 1000;
+robot.setMouseDelay(0);
 
 const app = express();
 const http = createServer(app);
@@ -19,15 +21,12 @@ const rootDir = path.resolve(__dirname, '..');
 
 app.use(express.static(path.join(rootDir, 'public')));
 
-app.get('/', (req, res) => {
-    res.sendFile(path.join(rootDir, 'public', 'index.html'));
-});
-app.get('/mouse', (req, res) => {
-    res.sendFile(path.join(rootDir, 'public', 'mouse.html'));
-});
-app.get('/editor', (req, res) => {
-    res.sendFile(path.join(rootDir, 'public', 'editor.html'));
-});
+app.get('/', (req, res) => {res.sendFile(path.join(rootDir, 'public', 'index.html'));});
+const setRoute = (route:string) => app.get(`/${route}`,(req, res) => {res.sendFile(path.join(rootDir, 'public', `${route}.html`))})
+
+setRoute('mouse');
+setRoute('editor');
+setRoute('game');
 app.post('/api/update', (req, res) => {
     let body = '';
     req.on('data', (chunk) => {
@@ -72,10 +71,11 @@ const main = async () => {
             }
         });
         socket.on('mouseMove', async (data) => {
-            const mouseCurPos = await mouse.getPosition();
-            const x = data.alpha * -sensivility;
-            const y = data.beta * -sensivility;
-            mouse.setPosition(new Point(mouseCurPos.x + x, mouseCurPos.y + y));
+            const mouseCurPos = robot.getMousePos();
+            const x = Math.round(data.x * sensivility);
+            const y = Math.round(data.y * sensivility);
+            robot.moveMouse(mouseCurPos.x + x, mouseCurPos.y + y);
+            // mouse.setPosition(new Point(mouseCurPos.x + x, mouseCurPos.y + y));
             // mouse.move([
             //     mousePos,
             //     new Point(mousePos.x + x, mousePos.y + y)
@@ -100,9 +100,6 @@ const main = async () => {
             mouse.scrollDown(data.deltaY);
             mouse.scrollRight(data.deltaX);
         });
-        socket.on('log', (data) => {
-            console.log(data)
-        })
         socket.on('disconnect', () => {
             console.log('user disconnected');
         });
