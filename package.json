@@ -1,5 +1,5 @@
 {
-  "name": "keypad",
+  "name": "remotepad",
   "version": "1.0.0",
   "description": "mobile touch to windows key binding",
   "main": "dist/index.js",

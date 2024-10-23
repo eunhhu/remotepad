@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mouse Remote Controller</title>
+    <style>
+        *{
+            box-sizing: border-box;
+        }
+        html, body{
+            padding: 0;
+            margin: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #000;
+            overflow: hidden;
+        }
+        .full{
+            width: 100%;
+            height: 100%;
+        }
+        .fr{display: flex;flex-direction: row;}
+        .fc{display: flex;flex-direction: column;}
+        .jc{display: flex;justify-content: center;}
+        .jb{display: flex;justify-content: space-between;}
+        .ja{display: flex;justify-content: space-around;}
+        .ic{align-items: center;}
+        .f1{flex: 1;}
+        .g1{gap: 0.3rem;}
+        .g2{gap:0.6rem;}
+        .p1{padding: 0.3rem;}
+        .p2{padding: 0.6rem;}
+        #left{
+            background: #f55;
+            border-radius: 10px;
+        }
+        #right{
+            background: #55f;
+            border-radius: 10px;
+        }
+        #switch{
+            background: #eee;
+            border-radius: 10px;
+            transition: background 0.2s ease;
+        }
+        .selected{
+            background: #9f9 !important;
+        }
+    </style>
+</head>
+<body>
+    <div id="container" class="jc g2 ic p2 full">
+        <div id="row" class="jc g2 ic full">
+            <div id="left" class="full"></div>
+            <div id="right" class="full"></div>
+        </div>
+        <div id="switch" class="full"></div>
+    </div>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const container = document.getElementById('container');
+        const row = document.getElementById('row');
+        const left = document.getElementById('left');
+        const right = document.getElementById('right');
+        const switcher = document.getElementById('switch');
+        let socket = io();
+        let lastAlpha = 0;
+        let lastBeta = 0;
+        let lastGamma = 0;
+        let isOn = false;
+        switcher.addEventListener('touchstart', e => {
+            isOn = !isOn;
+            switcher.classList.toggle('selected', isOn)
+        })
+        left.addEventListener('touchstart', e => {
+            if(socket && isOn) socket.emit("mousePress", {button:"left"})
+        })
+        right.addEventListener('touchstart', e => {
+            if(socket && isOn) socket.emit("mousePress", {button:"right"})
+        })
+        left.addEventListener('touchend', e => {
+            if(socket && isOn) socket.emit("mouseRelease", {button:"left"})
+        })
+        right.addEventListener('touchend', e => {
+            if(socket && isOn) socket.emit("mouseRelease", {button:"right"})
+        })
+        window.addEventListener('deviceorientation', function(event) {
+            let alpha = event.alpha;
+            let beta = event.beta;
+            let gamma = event.gamma;
+            let alphaDiff = alpha - lastAlpha;
+            alphaDiff > 180 && (alphaDiff = 360 - alphaDiff);
+            alphaDiff < -180 && (alphaDiff = 360 + alphaDiff);
+            let betaDiff = beta - lastBeta;
+            betaDiff > 180 && (betaDiff = 360 - betaDiff);
+            betaDiff < -180 && (betaDiff = 360 + betaDiff);
+            let gammaDiff = gamma - lastGamma;
+            gammaDiff > 90 && (gammaDiff = 180 - gammaDiff);
+            gammaDiff < -90 && (gammaDiff = 180 + gammaDiff);
+            lastAlpha = alpha;
+            lastBeta = beta;
+            lastGamma = gamma;
+            if(socket && isOn) socket.emit('mouseMove', { alpha:alphaDiff, beta:betaDiff, gamma:gammaDiff });
+        })
+        const resize = () => {
+            const isSero = innerWidth < innerHeight;
+            container.classList.remove('fr', 'fc')
+            row.classList.remove('fr', 'fc')
+            container.classList.add(isSero ? 'fc' : 'fr')
+            row.classList.add(isSero ? 'fr' : 'fc')
+        };
+        window.addEventListener('resize', resize)
+        resize()
+    </script>
+</body>
+</html>
