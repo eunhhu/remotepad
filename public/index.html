@@ -234,7 +234,7 @@
                 lastY = undefined;
                 socket.emit('mouseZoneEnd', { id: this.id });
                 const deltaT = Date.now() - lastStartTime;
-                if(deltaX < 2 && deltaY < 2 && deltaT < 200){
+                if(Math.abs(deltaX) < 2 && Math.abs(deltaY) < 2 && deltaT < 200){
                     socket.emit('mouseZoneClick', { id: this.id, button:'left' });
                 }
             }
