@@ -1,0 +1,23 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      # robotjs and @nut-tree-fork/nut-js are native modules that often fail to
+      # build in CI without display/headers. We only typecheck here; a full
+      # build/run must happen on a developer machine with the required
+      # toolchain installed.
+      - name: Install deps (skip native build)
+        run: npm install --ignore-scripts
+      - name: Typecheck
+        run: npx tsc --noEmit

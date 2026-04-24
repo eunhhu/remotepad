@@ -2,8 +2,8 @@ import express from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import path from 'path';
-import {Button, Key, keyboard, mouse, Point} from '@nut-tree-fork/nut-js';
-import { readFileSync, writeFileSync } from 'fs';
+import { Button, keyboard, mouse, Point } from '@nut-tree-fork/nut-js';
+import { writeFileSync } from 'fs';
 import { keymap } from './keymap';
 import robot from 'robotjs';
 
@@ -16,7 +16,10 @@ const app = express();
 const http = createServer(app);
 const io = new Server(http);
 
-const PORT = 3000;
+const PORT = Number(process.env.PORT) || 3000;
+// Mouse motion sensitivity for the phone-as-mouse (deviceorientation) flow.
+// Larger values == bigger mouse deltas per degree of device rotation.
+const SENSITIVITY = Number(process.env.REMOTEPAD_SENSITIVITY) || 30;
 const rootDir = path.resolve(__dirname, '..');
 
 app.use(express.static(path.join(rootDir, 'public')));
@@ -38,20 +41,21 @@ app.post('/api/update', (req, res) => {
     });
 });
 
-const sensivility = 30;
 const main = async () => {
-    let mousePos = await mouse.getPosition();
-    
     io.on('connection', (socket) => {
         console.log('a user connected');
         socket.on('log', (...args:any[]) => {
             console.log('[Client]', ...args);
         })
         socket.on('buttonPress', (data) => {
-            keyboard.pressKey(keymap[data.key]);
+            const k = keymap[data?.key];
+            if (!k) return;
+            keyboard.pressKey(k).catch((err) => console.error('pressKey failed:', err));
         });
         socket.on('buttonRelease', (data) => {
-            keyboard.releaseKey(keymap[data.key]);
+            const k = keymap[data?.key];
+            if (!k) return;
+            keyboard.releaseKey(k).catch((err) => console.error('releaseKey failed:', err));
         });
         socket.on('joystickMove', async (data) => {
             const x = Math.cos(data.angle) * data.distance * 10;
@@ -72,15 +76,9 @@ const main = async () => {
         });
         socket.on('mouseMove', async (data) => {
             const mouseCurPos = robot.getMousePos();
-            const x = Math.round(data.x * sensivility);
-            const y = Math.round(data.y * sensivility);
+            const x = Math.round((data?.x ?? 0) * SENSITIVITY);
+            const y = Math.round((data?.y ?? 0) * SENSITIVITY);
             robot.moveMouse(mouseCurPos.x + x, mouseCurPos.y + y);
-            // mouse.setPosition(new Point(mouseCurPos.x + x, mouseCurPos.y + y));
-            // mouse.move([
-            //     mousePos,
-            //     new Point(mousePos.x + x, mousePos.y + y)
-            // ])
-            // mousePos = new Point(mousePos.x + x, mousePos.y + y);
         })
         socket.on('mousePress', (data) => {
             if (data.button === 'left') {
@@ -110,5 +108,18 @@ main()
 
 http.listen(PORT, () => {
     console.log(`listening on *:${PORT}`);
-    console.log(`you can access editor at http://localhost:${PORT}/editor`);
+    console.log(`you can access the editor at http://localhost:${PORT}/editor`);
 });
+
+const shutdown = (signal: string) => {
+    console.log(`received ${signal}, shutting down gracefully...`);
+    io.close();
+    http.close(() => {
+        console.log('http server closed');
+        process.exit(0);
+    });
+    // hard cap: if close() stalls (e.g. a stuck socket), force exit.
+    setTimeout(() => process.exit(1), 5000).unref();
+};
+process.on('SIGINT', () => shutdown('SIGINT'));
+process.on('SIGTERM', () => shutdown('SIGTERM'));
