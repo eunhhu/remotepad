@@ -96,3 +96,34 @@ jobs:
         run: |
           asset="$(find dist/release -maxdepth 1 \( -name '*.tar.gz' -o -name '*.zip' \) -print -quit)"
           gh release upload "$TAG" "$asset" --clobber
+
+  build-ios-unsigned-ipa:
+    needs: create-release
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build unsigned iOS app
+        run: |
+          xcodebuild \
+            -project ios/RemotePadApp/RemotePad.xcodeproj \
+            -target RemotePad \
+            -configuration Release \
+            -sdk iphoneos \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+      - name: Package unsigned IPA
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          name="remotepad-${TAG}-ios-arm64-unsigned"
+          mkdir -p "dist/release/$name/Payload"
+          cp -R ios/RemotePadApp/build/Release-iphoneos/RemotePad.app "dist/release/$name/Payload/"
+          (cd "dist/release/$name" && zip -qry "../${name}.ipa" Payload)
+      - name: Upload unsigned IPA asset
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          asset="$(find dist/release -maxdepth 1 -name '*-ios-arm64-unsigned.ipa' -print -quit)"
+          gh release upload "$TAG" "$asset" --clobber
