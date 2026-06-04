@@ -90,6 +90,7 @@ out
 # Nuxt.js build / generate output
 .nuxt
 dist
+web/dist/
 
 # Gatsby files
 .cache/
@@ -130,3 +131,5 @@ dist
 .pnp.*
 
 bin/
+target/
+.build/
