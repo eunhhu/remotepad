@@ -29,3 +29,10 @@ select {
     @apply h-10 w-full rounded-md border border-line bg-[#101318] px-3 text-sm text-ink outline-none transition focus:border-action;
   }
 }
+
+@media (prefers-reduced-motion: no-preference) {
+  button,
+  .input {
+    transition-duration: 120ms;
+  }
+}
