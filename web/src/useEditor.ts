@@ -124,7 +124,20 @@ export function useEditor(): Editor {
     if (!Number.isFinite(parsed)) {
       return;
     }
-    setLayout((previous) => ({ ...previous, canvasSize: { ...previous.canvasSize, [field]: toPixels(Math.max(280, Math.min(parsed, 2400))) } }));
+    setLayout((previous) => ({
+      ...previous,
+      canvasSize: { ...previous.canvasSize, [field]: toPixels(limitCanvasDimension(parsed)) }
+    }));
+  }
+
+  function updateCanvasSize(width: number, height: number): void {
+    setLayout((previous) => ({
+      ...previous,
+      canvasSize: {
+        width: toPixels(limitCanvasDimension(width)),
+        height: toPixels(limitCanvasDimension(height))
+      }
+    }));
   }
 
   function updatePrimary(patch: Partial<LayoutControl>): void {
@@ -190,6 +203,7 @@ export function useEditor(): Editor {
     alignSelection: (action: AlignmentAction) => setLayout((previous) => alignControls(previous, selectedIndices(), action)),
     distributeSelection: (axis: DistributionAxis) => setLayout((previous) => distributeControls(previous, selectedIndices(), axis)),
     updateCanvas,
+    updateCanvasSize,
     updatePrimary,
     updatePrimaryNumeric,
     startKeyRecording: () => {
@@ -228,6 +242,10 @@ function numericPatch(field: NumericField, value: number, control: LayoutControl
     return { height: toPixels(Math.max(minControlSize, Math.min(value, canvasHeight))) };
   }
   return { borderRadius: toPixels(Math.max(0, Math.min(value, 999))) };
+}
+
+function limitCanvasDimension(value: number): number {
+  return Math.max(280, Math.min(value, 2400));
 }
 
 export function parseControlKind(value: string): ControlKind | undefined {

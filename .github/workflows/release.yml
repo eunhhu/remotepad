@@ -1,0 +1,98 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            exit 0
+          fi
+          cat > /tmp/release-notes.md <<'EOF'
+          RemotePad release.
+
+          Assets include Rust server binaries for desktop platforms. Signed IPA assets are uploaded from the maintainer machine because iOS signing requires local certificates and provisioning.
+          EOF
+          gh release create "$TAG" --target "$GITHUB_SHA" --title "$TAG" --notes-file /tmp/release-notes.md
+
+  build-desktop:
+    needs: create-release
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: linux
+            package_ext: tar.gz
+          - os: windows-latest
+            platform: windows
+            package_ext: zip
+          - os: macos-latest
+            platform: macos
+            package_ext: tar.gz
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install Linux native deps
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pkg-config libx11-dev libxi-dev libxtst-dev libxkbcommon-dev
+      - run: npm ci
+      - run: npm run build
+      - run: cargo build --release
+      - name: Package asset
+        shell: bash
+        env:
+          TAG: ${{ github.ref_name }}
+          PLATFORM: ${{ matrix.platform }}
+          PACKAGE_EXT: ${{ matrix.package_ext }}
+        run: |
+          set -euo pipefail
+          case "$PLATFORM" in
+            windows)
+              arch="x86_64"
+              exe=".exe"
+              ;;
+            *)
+              arch="$(uname -m)"
+              exe=""
+              ;;
+          esac
+          name="remotepad-${TAG}-${PLATFORM}-${arch}"
+          mkdir -p "dist/release/$name/bin" "dist/release/$name/web"
+          cp "target/release/remotepad${exe}" "dist/release/$name/bin/"
+          cp "target/release/remotepad-qa${exe}" "dist/release/$name/bin/"
+          cp -R web/dist "dist/release/$name/web/dist"
+          cp README.md LICENSE "dist/release/$name/"
+          if [[ "$PACKAGE_EXT" == "zip" ]]; then
+            (cd dist/release && 7z a "${name}.zip" "$name")
+          else
+            tar -C dist/release -czf "dist/release/${name}.tar.gz" "$name"
+          fi
+      - name: Upload asset
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          asset="$(find dist/release -maxdepth 1 \( -name '*.tar.gz' -o -name '*.zip' \) -print -quit)"
+          gh release upload "$TAG" "$asset" --clobber

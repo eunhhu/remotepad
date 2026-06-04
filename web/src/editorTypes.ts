@@ -40,6 +40,7 @@ export type Editor = {
   readonly alignSelection: (action: AlignmentAction) => void;
   readonly distributeSelection: (axis: DistributionAxis) => void;
   readonly updateCanvas: (field: "width" | "height", value: string) => void;
+  readonly updateCanvasSize: (width: number, height: number) => void;
   readonly updatePrimary: (patch: Partial<LayoutControl>) => void;
   readonly updatePrimaryNumeric: (field: NumericField, value: string) => void;
   readonly startKeyRecording: () => void;

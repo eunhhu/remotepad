@@ -1,6 +1,6 @@
 {
   "name": "remotepad",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "low-latency UDP remote input server and layout editor",
   "type": "module",
   "private": true,
