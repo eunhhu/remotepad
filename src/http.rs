@@ -1,15 +1,17 @@
 use std::{
+    net::SocketAddr,
     path::{Path, PathBuf},
     sync::Arc,
 };
 
 use axum::{
     Json, Router,
-    extract::{Path as AxumPath, State},
-    http::StatusCode,
+    extract::{ConnectInfo, Path as AxumPath, State},
+    http::{HeaderMap, StatusCode, header::USER_AGENT},
     response::{IntoResponse, Response},
-    routing::get,
+    routing::{get, post},
 };
+use serde::{Deserialize, Serialize};
 use serde_json::json;
 use thiserror::Error;
 use tower_http::services::ServeDir;
@@ -30,6 +32,9 @@ pub enum HttpError {
 pub struct AppConfig {
     layout_dir: PathBuf,
     public_dir: PathBuf,
+    default_layout_path: Option<PathBuf>,
+    http_addr: Option<SocketAddr>,
+    udp_addr: Option<SocketAddr>,
 }
 
 impl AppConfig {
@@ -37,6 +42,9 @@ impl AppConfig {
         Self {
             layout_dir,
             public_dir,
+            default_layout_path: None,
+            http_addr: None,
+            udp_addr: None,
         }
     }
 
@@ -44,7 +52,21 @@ impl AppConfig {
         Self {
             layout_dir: base.join("layouts"),
             public_dir: base.join("public"),
+            default_layout_path: None,
+            http_addr: None,
+            udp_addr: None,
         }
+    }
+
+    pub fn with_default_layout_path(mut self, path: PathBuf) -> Self {
+        self.default_layout_path = Some(path);
+        self
+    }
+
+    pub fn with_server_addrs(mut self, http_addr: SocketAddr, udp_addr: SocketAddr) -> Self {
+        self.http_addr = Some(http_addr);
+        self.udp_addr = Some(udp_addr);
+        self
     }
 }
 
@@ -52,6 +74,14 @@ impl AppConfig {
 struct AppState {
     layouts: LayoutStore,
     stats: Arc<InputStats>,
+    server_info: ServerInfo,
+}
+
+#[derive(Debug, Clone)]
+struct ServerInfo {
+    http_addr: Option<SocketAddr>,
+    udp_addr: Option<SocketAddr>,
+    default_layout_path: Option<PathBuf>,
 }
 
 pub fn build_router(config: AppConfig, _sink: NoopInputSink) -> Result<Router, HttpError> {
@@ -62,12 +92,22 @@ pub fn build_router_with_stats(
     config: AppConfig,
     stats: Arc<InputStats>,
 ) -> Result<Router, HttpError> {
+    let layouts = match config.default_layout_path.clone() {
+        Some(path) => LayoutStore::with_default_path(config.layout_dir, path),
+        None => LayoutStore::new(config.layout_dir),
+    };
     let state = AppState {
-        layouts: LayoutStore::new(config.layout_dir),
+        layouts,
         stats,
+        server_info: ServerInfo {
+            http_addr: config.http_addr,
+            udp_addr: config.udp_addr,
+            default_layout_path: config.default_layout_path,
+        },
     };
     Ok(Router::new()
         .route("/healthz", get(healthz))
+        .route("/api/clients/connect", post(post_client_connect))
         .route("/api/layouts/{name}", get(get_layout).put(put_layout))
         .route("/api/stats", get(get_stats))
         .with_state(state)
@@ -76,6 +116,47 @@ pub fn build_router_with_stats(
 
 async fn healthz() -> impl IntoResponse {
     Json(json!({ "status": "ok" }))
+}
+
+async fn post_client_connect(
+    State(state): State<AppState>,
+    ConnectInfo(remote): ConnectInfo<SocketAddr>,
+    headers: HeaderMap,
+    Json(request): Json<ClientConnectRequest>,
+) -> impl IntoResponse {
+    let user_agent = headers
+        .get(USER_AGENT)
+        .and_then(|value| value.to_str().ok())
+        .unwrap_or("");
+    tracing::info!(
+        remote = %remote,
+        client = request.client.as_deref().unwrap_or("unknown"),
+        app_version = request.app_version.as_deref().unwrap_or("unknown"),
+        user_agent,
+        http = state
+            .server_info
+            .http_addr
+            .map(|addr| addr.to_string())
+            .as_deref()
+            .unwrap_or("unknown"),
+        udp = state
+            .server_info
+            .udp_addr
+            .map(|addr| addr.to_string())
+            .as_deref()
+            .unwrap_or("unknown"),
+        "client connected"
+    );
+    Json(ClientConnectResponse {
+        status: "connected",
+        http_port: state.server_info.http_addr.map(|addr| addr.port()),
+        udp_port: state.server_info.udp_addr.map(|addr| addr.port()),
+        default_layout: state
+            .server_info
+            .default_layout_path
+            .as_ref()
+            .map(|path| path.display().to_string()),
+    })
 }
 
 async fn get_layout(
@@ -108,6 +189,22 @@ async fn put_layout(
 
 async fn get_stats(State(state): State<AppState>) -> impl IntoResponse {
     Json(state.stats.snapshot())
+}
+
+#[derive(Debug, Default, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct ClientConnectRequest {
+    client: Option<String>,
+    app_version: Option<String>,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct ClientConnectResponse {
+    status: &'static str,
+    http_port: Option<u16>,
+    udp_port: Option<u16>,
+    default_layout: Option<String>,
 }
 
 #[derive(Debug)]

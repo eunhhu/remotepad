@@ -130,11 +130,22 @@ impl LayoutName {
 #[derive(Debug, Clone)]
 pub struct LayoutStore {
     root: PathBuf,
+    default_path: Option<PathBuf>,
 }
 
 impl LayoutStore {
     pub fn new(root: PathBuf) -> Self {
-        Self { root }
+        Self {
+            root,
+            default_path: None,
+        }
+    }
+
+    pub fn with_default_path(root: PathBuf, default_path: PathBuf) -> Self {
+        Self {
+            root,
+            default_path: Some(default_path),
+        }
     }
 
     pub fn save(&self, name: &LayoutName, layout: &Layout) -> Result<(), LayoutError> {
@@ -147,6 +158,11 @@ impl LayoutStore {
     }
 
     fn path_for(&self, name: &LayoutName) -> PathBuf {
+        if name.is_default()
+            && let Some(default_path) = &self.default_path
+        {
+            return default_path.clone();
+        }
         self.root.join(name.file_name())
     }
 
