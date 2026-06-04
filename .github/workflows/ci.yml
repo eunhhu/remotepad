@@ -6,18 +6,32 @@ on:
   pull_request:
 
 jobs:
-  typecheck:
+  web:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
-      # robotjs and @nut-tree-fork/nut-js are native modules that often fail to
-      # build in CI without display/headers. We only typecheck here; a full
-      # build/run must happen on a developer machine with the required
-      # toolchain installed.
-      - name: Install deps (skip native build)
-        run: npm install --ignore-scripts
-      - name: Typecheck
-        run: npx tsc --noEmit
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run build
+
+  rust:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - run: cargo fmt --all -- --check
+      - run: cargo clippy --all-targets --all-features -- -D warnings
+      - run: cargo test --all-targets
+      - run: cargo build
+
+  swift:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: swift test --package-path ios/RemotePadClient
