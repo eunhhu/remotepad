@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		4DD8A82ED15A92C75DC6ACE7 /* KeyCodeMapping.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFDCDA66CBA1432E290298F5 /* KeyCodeMapping.swift */; };
+		59B35F02803B600B63E2C072 /* RemotePadHttpClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3E985E2012952CC75721DEB /* RemotePadHttpClient.swift */; };
 		5DE6F1914657312FE110180C /* RemotePadViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BC084482FE0D2B2953DF094 /* RemotePadViewModel.swift */; };
 		947BD6C17FFAE8B424C89035 /* InputProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC2DF3075E034AB83A36EC9C /* InputProtocol.swift */; };
 		A28D9B23EE66AF9A94C2AD9A /* RemotePadApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3B68217B1B59A38B58F58DF /* RemotePadApp.swift */; };
@@ -19,7 +21,10 @@
 		135D9195ECEB6C0E65846CB5 /* Layout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Layout.swift; sourceTree = "<group>"; };
 		20ABF56464C2C174E6612AAF /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		5BC084482FE0D2B2953DF094 /* RemotePadViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemotePadViewModel.swift; sourceTree = "<group>"; };
+		AF76ED334D8EBA2C6F8DABA7 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		AFDCDA66CBA1432E290298F5 /* KeyCodeMapping.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyCodeMapping.swift; sourceTree = "<group>"; };
 		BF90DC17FA7BF611BF4817AE /* RemotePad.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = RemotePad.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		D3E985E2012952CC75721DEB /* RemotePadHttpClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemotePadHttpClient.swift; sourceTree = "<group>"; };
 		EC2DF3075E034AB83A36EC9C /* InputProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputProtocol.swift; sourceTree = "<group>"; };
 		F3B68217B1B59A38B58F58DF /* RemotePadApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemotePadApp.swift; sourceTree = "<group>"; };
 		F73568C8A800251731B6BB44 /* UdpInputSender.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UdpInputSender.swift; sourceTree = "<group>"; };
@@ -30,7 +35,9 @@
 			isa = PBXGroup;
 			children = (
 				EC2DF3075E034AB83A36EC9C /* InputProtocol.swift */,
+				AFDCDA66CBA1432E290298F5 /* KeyCodeMapping.swift */,
 				135D9195ECEB6C0E65846CB5 /* Layout.swift */,
+				D3E985E2012952CC75721DEB /* RemotePadHttpClient.swift */,
 				F73568C8A800251731B6BB44 /* UdpInputSender.swift */,
 			);
 			name = RemotePadClient;
@@ -66,6 +73,7 @@
 			isa = PBXGroup;
 			children = (
 				20ABF56464C2C174E6612AAF /* ContentView.swift */,
+				AF76ED334D8EBA2C6F8DABA7 /* Info.plist */,
 				F3B68217B1B59A38B58F58DF /* RemotePadApp.swift */,
 				5BC084482FE0D2B2953DF094 /* RemotePadViewModel.swift */,
 			);
@@ -133,8 +141,10 @@
 			files = (
 				CE3726C92FE68FD1AB84C068 /* ContentView.swift in Sources */,
 				947BD6C17FFAE8B424C89035 /* InputProtocol.swift in Sources */,
+				4DD8A82ED15A92C75DC6ACE7 /* KeyCodeMapping.swift in Sources */,
 				A50603755C823CEF20F963F4 /* Layout.swift in Sources */,
 				A28D9B23EE66AF9A94C2AD9A /* RemotePadApp.swift in Sources */,
+				59B35F02803B600B63E2C072 /* RemotePadHttpClient.swift in Sources */,
 				5DE6F1914657312FE110180C /* RemotePadViewModel.swift in Sources */,
 				B445423C7D394D08A8ECA70B /* UdpInputSender.swift in Sources */,
 			);
@@ -268,18 +278,14 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 4;
 				DEVELOPMENT_TEAM = FGS77772YC;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = RemotePad;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_FILE = Sources/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.2.2;
+				MARKETING_VERSION = 0.2.3;
 				PRODUCT_BUNDLE_IDENTIFIER = com.eunhhu.remotepad;
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -293,18 +299,14 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 4;
 				DEVELOPMENT_TEAM = FGS77772YC;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = RemotePad;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_FILE = Sources/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.2.2;
+				MARKETING_VERSION = 0.2.3;
 				PRODUCT_BUNDLE_IDENTIFIER = com.eunhhu.remotepad;
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";

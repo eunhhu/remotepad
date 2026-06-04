@@ -43,6 +43,22 @@ import Testing
     }
 }
 
+@Test func mapsDomKeyZToWindowsScanCode() throws {
+    let key = try KeyCode(layoutCode: "KeyZ")
+    #expect(key.wireValue == 0x2C)
+}
+
+@Test func mapsArrowToWindowsExtendedScanCode() throws {
+    let key = try KeyCode(layoutCode: "ArrowUp")
+    #expect(key.wireValue == 0xFF48)
+}
+
+@Test func rejectsUnknownLayoutCode() {
+    #expect(throws: KeyCodeMappingError.self) {
+        _ = try KeyCode(layoutCode: "Nope")
+    }
+}
+
 @Test func decodesServerAcceptedLayoutWhenOptionalStyleFieldsMissing() throws {
     let json = """
     {

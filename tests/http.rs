@@ -137,3 +137,33 @@ async fn static_fallback_uses_test_public_dir_when_configured_for_test() {
 
     assert_eq!(body, "qa index");
 }
+
+#[tokio::test]
+async fn client_connect_endpoint_reports_connected() {
+    let temp = tempfile::tempdir().expect("temp dir");
+    let app = build_router(AppConfig::for_test(temp.path()), NoopInputSink::default())
+        .expect("router builds");
+
+    let mut request = axum::http::Request::builder()
+        .method("POST")
+        .uri("/api/clients/connect")
+        .header("content-type", "application/json")
+        .body(Body::from(r#"{"client":"test"}"#))
+        .expect("request");
+    request
+        .extensions_mut()
+        .insert(axum::extract::connect_info::ConnectInfo(
+            "127.0.0.1:50000"
+                .parse::<std::net::SocketAddr>()
+                .expect("addr"),
+        ));
+
+    let response = app.oneshot(request).await.expect("response");
+    assert_eq!(response.status(), axum::http::StatusCode::OK);
+
+    let bytes = to_bytes(response.into_body(), 1_048_576)
+        .await
+        .expect("body bytes");
+    let json = String::from_utf8(bytes.to_vec()).expect("utf8");
+    assert!(json.contains("\"connected\""));
+}

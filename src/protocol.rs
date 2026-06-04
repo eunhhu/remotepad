@@ -31,11 +31,7 @@ pub struct KeyCode(u16);
 
 impl KeyCode {
     pub const fn from_wire(value: u16) -> Option<Self> {
-        if value == 0 || value > 512 {
-            None
-        } else {
-            Some(Self(value))
-        }
+        if value == 0 { None } else { Some(Self(value)) }
     }
 
     pub const fn as_wire(self) -> u16 {

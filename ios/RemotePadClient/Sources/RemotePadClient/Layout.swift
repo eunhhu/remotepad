@@ -4,6 +4,11 @@ public struct Layout: Codable, Equatable, Sendable {
     public let canvasSize: CanvasSize
     public let controls: [Control]
 
+    public init(canvasSize: CanvasSize, controls: [Control]) {
+        self.canvasSize = canvasSize
+        self.controls = controls
+    }
+
     public static func decode(_ data: Data) throws -> Layout {
         try JSONDecoder().decode(Layout.self, from: data)
     }
@@ -18,6 +23,11 @@ public struct Layout: Codable, Equatable, Sendable {
 public struct CanvasSize: Codable, Equatable, Sendable {
     public let width: String
     public let height: String
+
+    public init(width: String, height: String) {
+        self.width = width
+        self.height = height
+    }
 }
 
 public struct Control: Codable, Equatable, Sendable {
@@ -39,6 +49,26 @@ public struct Control: Codable, Equatable, Sendable {
         case borderRadius
         case transform
         case key
+    }
+
+    public init(
+        type: ControlKind,
+        left: String,
+        top: String,
+        width: String,
+        height: String,
+        borderRadius: String = "",
+        transform: String = "",
+        key: String = ""
+    ) {
+        self.type = type
+        self.left = left
+        self.top = top
+        self.width = width
+        self.height = height
+        self.borderRadius = borderRadius
+        self.transform = transform
+        self.key = key
     }
 
     public init(from decoder: Decoder) throws {

@@ -1,4 +1,4 @@
-use std::{net::SocketAddr, sync::Arc, time::Instant};
+use std::{collections::HashSet, net::SocketAddr, sync::Arc, time::Instant};
 
 use thiserror::Error;
 use tokio::net::UdpSocket;
@@ -25,6 +25,7 @@ pub struct UdpInputServer<Sink: InputSink> {
     actor: InputActor<Sink>,
     stats: Arc<InputStats>,
     sequence: SequenceTracker,
+    clients: HashSet<SocketAddr>,
 }
 
 impl<Sink> UdpInputServer<Sink>
@@ -42,6 +43,7 @@ where
             actor: InputActor::new(sink),
             stats,
             sequence: SequenceTracker::default(),
+            clients: HashSet::new(),
         })
     }
 
@@ -58,7 +60,8 @@ where
         let mut processed = 0_u64;
         let mut buffer = [0_u8; 256];
         while processed < frame_limit {
-            let (len, _) = self.socket.recv_from(&mut buffer).await?;
+            let (len, remote) = self.socket.recv_from(&mut buffer).await?;
+            self.record_remote(remote);
             self.stats.record_received();
             processed += 1;
             match Frame::decode(&buffer[..len]) {
@@ -83,7 +86,8 @@ where
     pub async fn run_forever(mut self) -> Result<(), UdpError> {
         let mut buffer = [0_u8; 256];
         loop {
-            let (len, _) = self.socket.recv_from(&mut buffer).await?;
+            let (len, remote) = self.socket.recv_from(&mut buffer).await?;
+            self.record_remote(remote);
             self.stats.record_received();
             match Frame::decode(&buffer[..len]) {
                 Ok(frame) if self.sequence.accepts(frame.sequence()) => {
@@ -97,6 +101,12 @@ where
                 Ok(_) => self.stats.record_stale(),
                 Err(_) => self.stats.record_malformed(),
             }
+        }
+    }
+
+    fn record_remote(&mut self, remote: SocketAddr) {
+        if self.clients.insert(remote) {
+            tracing::info!(remote = %remote, "udp client connected");
         }
     }
 }

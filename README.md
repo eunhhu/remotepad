@@ -42,18 +42,31 @@ npm run build
 
 ```bash
 cargo run --bin remotepad -- \
-  --backend noop \
-  --http-addr 0.0.0.0:3000 \
-  --udp-addr 0.0.0.0:3001 \
+  --backend enigo \
   --layout-dir layouts \
   --public-dir web/dist
 ```
 
-Use `--backend enigo` only when you want real host input injection. Keep
-`--backend noop` for protocol QA, layout work, and latency measurement without
-sending real key events.
+Default ports are HTTP editor `3000` and UDP input `3001`. Use `--port 3001`
+when you want the editor and UDP socket on the same port number:
+
+```bash
+cargo run --bin remotepad -- --backend enigo --port 3001
+```
+
+`enigo` is the default backend. Use `--backend noop` only for protocol QA,
+layout work, and latency measurement without sending real key events.
 
 Open `http://<host-ip>:3000/` for the layout editor after `npm run build`.
+
+Load and edit a specific layout JSON file:
+
+```bash
+cargo run --bin remotepad -- --backend enigo --load save.json
+```
+
+With `--load save.json`, the web editor reads `save.json` as the default layout
+and saves edits back to that file.
 
 ## Develop
 
@@ -112,11 +125,19 @@ frames to a running server.
 
 ```bash
 cargo run --bin remotepad-qa -- \
-  --addr 127.0.0.1:3001 \
-  --sequence 1 \
-  --down KeyZ \
-  --down KeyX
+  --target 127.0.0.1:3001 \
+  --key KeyZ \
+  --key KeyX
 ```
+
+When targeting another machine on the LAN, use that machine's host IP:
+
+```bash
+cargo run --bin remotepad-qa -- --target 192.168.0.100:3001
+```
+
+The QA sender binds to `0.0.0.0:0` by default, so it can send to LAN targets.
+Use `--bind <ip:port>` only when you need a specific local interface.
 
 ## Test
 
@@ -136,6 +157,11 @@ xcodebuild -project ios/RemotePadApp/RemotePad.xcodeproj -target RemotePad -conf
 
 `ios/RemotePadClient` is the tested Swift client library. `ios/RemotePadApp`
 is an installable SwiftUI wrapper app generated with XcodeGen.
+
+In the app, enter the Windows host LAN IP, not `127.0.0.1`. The app first calls
+`POST /api/clients/connect`, then fetches the current default layout from
+`GET /api/layouts/default`. The server logs the HTTP connect event and the
+first UDP datagram from each client.
 
 ```bash
 cd ios/RemotePadApp

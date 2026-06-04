@@ -12,7 +12,7 @@ public struct KeyCode: Equatable, Hashable, Sendable {
     public let wireValue: UInt16
 
     public init(wireValue: UInt16) throws {
-        guard wireValue > 0, wireValue <= 512 else {
+        guard wireValue > 0 else {
             throw ProtocolEncodingError.invalidKeyCode(wireValue)
         }
         self.wireValue = wireValue

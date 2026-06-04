@@ -24,7 +24,7 @@ jobs:
           cat > /tmp/release-notes.md <<'EOF'
           RemotePad release.
 
-          Assets include Rust server binaries for desktop platforms. Signed IPA assets are uploaded from the maintainer machine because iOS signing requires local certificates and provisioning.
+          Assets include Rust server binaries for desktop platforms and an unsigned iOS IPA. Device-installable signed IPA builds require a matching Apple certificate and provisioning profile.
           EOF
           gh release create "$TAG" --target "$GITHUB_SHA" --title "$TAG" --notes-file /tmp/release-notes.md
 
