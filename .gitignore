@@ -131,6 +131,8 @@ web/dist/
 .pnp.*
 
 bin/
+!src/bin/
+!src/bin/*.rs
 target/
 .build/
 ios/**/build/
