@@ -27,6 +27,21 @@ export const layoutSchema = z.object({
 export type LayoutControl = z.infer<typeof controlSchema>;
 export type Layout = z.infer<typeof layoutSchema>;
 
+export type CanvasPreset = {
+  readonly label: string;
+  readonly width: number;
+  readonly height: number;
+};
+
+export const canvasPresets: readonly CanvasPreset[] = [
+  { label: "iPhone compact", width: 390, height: 844 },
+  { label: "iPhone large", width: 430, height: 932 },
+  { label: "iPad 11", width: 834, height: 1194 },
+  { label: "iPad 13", width: 1032, height: 1376 },
+  { label: "Steam Deck", width: 1280, height: 800 },
+  { label: "Custom wide", width: 820, height: 420 }
+];
+
 export const defaultLayout: Layout = {
   canvasSize: {
     width: "820px",

@@ -122,12 +122,30 @@ cargo run --bin remotepad-qa -- \
 
 ```bash
 npm run typecheck
+npm test
 npm run build
 cargo fmt --all -- --check
 cargo clippy --all-targets --all-features -- -D warnings
 cargo test --all-targets
 swift test --package-path ios/RemotePadClient
+xcodegen generate --spec ios/RemotePadApp/project.yml
+xcodebuild -project ios/RemotePadApp/RemotePad.xcodeproj -target RemotePad -configuration Debug -sdk iphonesimulator build
 ```
+
+## iOS App
+
+`ios/RemotePadClient` is the tested Swift client library. `ios/RemotePadApp`
+is an installable SwiftUI wrapper app generated with XcodeGen.
+
+```bash
+cd ios/RemotePadApp
+xcodegen generate
+xcodebuild -project RemotePad.xcodeproj -target RemotePad -configuration Debug -sdk iphonesimulator build
+```
+
+Device IPA export requires a valid Apple account or a matching provisioning
+profile for `com.eunhhu.remotepad`. Without that, Xcode can compile the app but
+iOS will reject installation because the app cannot be code-signed.
 
 ## Project Layout
 

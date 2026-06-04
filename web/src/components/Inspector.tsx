@@ -1,8 +1,9 @@
-import { Keyboard, Trash2 } from "lucide-solid";
+import { Keyboard, RefreshCw, Trash2 } from "lucide-solid";
 import { For, Show } from "solid-js";
 import { minControlSize } from "../geometry";
 import type { Editor } from "../editorTypes";
-import { controlKinds, readPixels } from "../layout";
+import { canvasPresets, controlKinds, readPixels } from "../layout";
+import type { CanvasPreset } from "../layout";
 import { parseControlKind } from "../useEditor";
 import { IconButton } from "./IconButton";
 
@@ -23,6 +24,17 @@ export function Inspector(props: { readonly editor: Editor }) {
       </div>
 
       <div class="space-y-4 p-4">
+        <Field label="Device">
+          <div class="grid grid-cols-[1fr_40px] gap-2">
+            <select class="input" value="" onInput={(event) => applyPreset(event.currentTarget.value, props.editor)}>
+              <option value="">Custom</option>
+              <For each={canvasPresets}>{(preset) => <option value={presetValue(preset)}>{preset.label}</option>}</For>
+            </select>
+            <IconButton label="Swap canvas orientation" onClick={() => props.editor.updateCanvasSize(props.editor.canvasHeight(), props.editor.canvasWidth())}>
+              <RefreshCw class="h-4 w-4" />
+            </IconButton>
+          </div>
+        </Field>
         <Field label="Canvas W">
           <NumberInput value={props.editor.canvasWidth()} onInput={(value) => props.editor.updateCanvas("width", value)} />
         </Field>
@@ -96,4 +108,15 @@ function NumberInput(props: { readonly value: number; readonly onInput: (value: 
 
 function primaryLabel(index: number | undefined): string {
   return index === undefined ? "-" : String(index + 1);
+}
+
+function presetValue(preset: CanvasPreset): string {
+  return `${preset.width}x${preset.height}`;
+}
+
+function applyPreset(value: string, editor: Editor): void {
+  const preset = canvasPresets.find((item) => presetValue(item) === value);
+  if (preset) {
+    editor.updateCanvasSize(preset.width, preset.height);
+  }
 }
