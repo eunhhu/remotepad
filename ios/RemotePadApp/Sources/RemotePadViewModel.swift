@@ -29,14 +29,15 @@ final class RemotePadViewModel {
         }
     }
 
-    func press(_ control: Control) {
+    @discardableResult
+    func press(_ control: Control) -> Bool {
         guard control.type == .Button else {
             status = "\(control.type.rawValue) input is not wired yet"
-            return
+            return false
         }
         guard !control.key.isEmpty else {
             status = "Control has no key binding"
-            return
+            return false
         }
         do {
             _ = try KeyCode(layoutCode: control.key)
@@ -45,8 +46,10 @@ final class RemotePadViewModel {
             if activeCount == 0 {
                 sendPressedStateSnapshot(label: "\(control.key) down")
             }
+            return true
         } catch {
             status = "Unsupported key \(control.key): \(error)"
+            return false
         }
     }
 

@@ -3,11 +3,25 @@ import UIKit
 
 struct ContentView: View {
     @Environment(\.scenePhase) private var scenePhase
+    @AppStorage("hapticMode") private var hapticModeRaw = HapticMode.off.rawValue
     @State private var model = RemotePadViewModel()
     @State private var showChrome = true
     @State private var showConnectionPanel = true
+    @State private var lockMode = false
     @State private var scaleMode = SurfaceScaleMode.fit
+    @State private var haptics = HapticFeedback()
     @FocusState private var focusedField: Field?
+
+    private var hapticMode: HapticMode {
+        HapticMode(rawValue: hapticModeRaw) ?? .off
+    }
+
+    private var hapticModeBinding: Binding<HapticMode> {
+        Binding(
+            get: { hapticMode },
+            set: { hapticModeRaw = $0.rawValue }
+        )
+    }
 
     var body: some View {
         ZStack {
@@ -24,6 +38,7 @@ struct ContentView: View {
                 focusedField = nil
                 showConnectionPanel = false
                 showChrome = false
+                lockMode = false
             }
         }
         .onChange(of: scenePhase) { _, phase in
@@ -51,15 +66,13 @@ struct ContentView: View {
     private func runtimeView(_ layout: Layout) -> some View {
         ZStack {
             RemotePadLayoutSurface(layout: layout, model: model, scaleMode: scaleMode)
+                .hapticMode(hapticMode, feedback: haptics)
                 .ignoresSafeArea()
                 .contentShape(Rectangle())
-                .onTapGesture(count: 2) {
-                    withAnimation(.snappy) {
-                        showChrome.toggle()
-                    }
-                }
 
-            if showChrome {
+            if lockMode {
+                lockedUnlockHandle
+            } else if showChrome {
                 VStack(spacing: 0) {
                     runtimeToolbar
 
@@ -94,6 +107,30 @@ struct ContentView: View {
         .background(Color(.systemBackground))
     }
 
+    private var lockedUnlockHandle: some View {
+        VStack {
+            HStack {
+                Image(systemName: "lock.fill")
+                    .font(.body.weight(.semibold))
+                    .frame(width: 40, height: 40)
+                    .background(.thinMaterial, in: Circle())
+                    .opacity(0.42)
+                    .accessibilityLabel("Hold to unlock controls")
+                    .accessibilityAddTraits(.isButton)
+                    .onLongPressGesture(minimumDuration: 1.0) {
+                        withAnimation(.snappy) {
+                            lockMode = false
+                            showChrome = true
+                        }
+                    }
+                Spacer()
+            }
+            .padding(.top, 10)
+            .padding(.horizontal, 12)
+            Spacer()
+        }
+    }
+
     private var runtimeToolbar: some View {
         HStack(spacing: 8) {
             runtimeIcon(showConnectionPanel ? "xmark" : "slider.horizontal.3", showConnectionPanel ? "Hide controls" : "Show controls") {
@@ -113,6 +150,14 @@ struct ContentView: View {
             }
 
             Spacer()
+
+            runtimeIcon("lock.fill", "Lock controls") {
+                withAnimation(.snappy) {
+                    lockMode = true
+                    showChrome = false
+                    showConnectionPanel = false
+                }
+            }
 
             runtimeIcon(showChrome ? "eye.slash" : "eye", "Hide overlay") {
                 withAnimation(.snappy) {
@@ -188,6 +233,19 @@ struct ContentView: View {
                 .buttonStyle(.bordered)
                 .accessibilityLabel("Send 12-key state")
             }
+
+            HStack(spacing: 8) {
+                Text("Haptic")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                Picker("Haptic", selection: hapticModeBinding) {
+                    ForEach(HapticMode.allCases) { mode in
+                        Text(mode.label).tag(mode)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .accessibilityLabel("Haptic strength")
+            }
         }
         .padding(12)
         .background {
@@ -219,6 +277,75 @@ struct ContentView: View {
                     .fill(.thinMaterial)
             }
         }
+    }
+}
+
+private enum HapticMode: String, CaseIterable, Identifiable {
+    case off
+    case light
+    case medium
+    case heavy
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .off:
+            "Off"
+        case .light:
+            "Light"
+        case .medium:
+            "Medium"
+        case .heavy:
+            "Heavy"
+        }
+    }
+
+    var style: UIImpactFeedbackGenerator.FeedbackStyle? {
+        switch self {
+        case .off:
+            nil
+        case .light:
+            .light
+        case .medium:
+            .medium
+        case .heavy:
+            .heavy
+        }
+    }
+
+    var intensity: CGFloat {
+        switch self {
+        case .off:
+            0
+        case .light:
+            0.35
+        case .medium:
+            0.65
+        case .heavy:
+            1
+        }
+    }
+}
+
+private final class HapticFeedback {
+    private var generator: UIImpactFeedbackGenerator?
+    private var currentMode = HapticMode.off
+
+    @MainActor
+    func impact(_ mode: HapticMode) {
+        guard let style = mode.style else {
+            generator = nil
+            currentMode = .off
+            return
+        }
+        if generator == nil || currentMode != mode {
+            generator = UIImpactFeedbackGenerator(style: style)
+            currentMode = mode
+            generator?.prepare()
+        }
+        generator?.impactOccurred(intensity: mode.intensity)
+        generator?.prepare()
     }
 }
 
@@ -259,14 +386,25 @@ private struct RemotePadLayoutSurface: View {
     let layout: Layout
     let model: RemotePadViewModel
     let scaleMode: SurfaceScaleMode
+    var hapticMode = HapticMode.off
+    var feedback: HapticFeedback?
 
     var body: some View {
         RemotePadTouchSurface(layout: layout, scaleMode: scaleMode) { control in
-            model.press(control)
+            if model.press(control) {
+                feedback?.impact(hapticMode)
+            }
         } onRelease: { control in
             model.release(control)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    func hapticMode(_ mode: HapticMode, feedback: HapticFeedback) -> Self {
+        var copy = self
+        copy.hapticMode = mode
+        copy.feedback = feedback
+        return copy
     }
 }
 
@@ -306,6 +444,14 @@ private final class RemotePadTouchSurfaceView: UIView {
         isAccessibilityElement = false
     }
 
+    override var canBecomeFirstResponder: Bool {
+        true
+    }
+
+    override var editingInteractionConfiguration: UIEditingInteractionConfiguration {
+        .none
+    }
+
     @available(*, unavailable)
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
@@ -334,6 +480,13 @@ private final class RemotePadTouchSurfaceView: UIView {
         rebuildControlRects()
         setNeedsDisplay()
         updateAccessibilityElements()
+    }
+
+    override func didMoveToWindow() {
+        super.didMoveToWindow()
+        if window != nil {
+            becomeFirstResponder()
+        }
     }
 
     override func draw(_ rect: CGRect) {
