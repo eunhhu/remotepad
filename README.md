@@ -1,150 +1,80 @@
-# remotepad
+# RemotePad
 
-Low-latency remote input server and layout editor.
+A low-latency remote input pad: a Rust server receives key states over a binary UDP protocol and injects them into the host with `enigo`, a Solid/Tailwind web app edits the on-screen control layout, and an iOS app renders that layout as a touch keypad.
 
-The server is Rust: `axum` for HTTP/static/layout APIs, binary UDP for the hot
-input path, and `enigo` for host keyboard/mouse injection. The web layout
-editor is Solid + Tailwind + Vite and is only an editor; runtime input clients
-should use the native UDP protocol.
+[![CI](https://github.com/eunhhu/remotepad/actions/workflows/ci.yml/badge.svg)](https://github.com/eunhhu/remotepad/actions/workflows/ci.yml)
+[![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](LICENSE)
 
-## Goals
+**Status:** Maintained — v0.2.4; keyboard input over UDP is implemented and tested. `Joystick` and `MouseZone` controls exist in the layout schema and editor, but the server and clients only dispatch key events today.
 
-- UDP-first input path for rhythm-game and remote-play latency work.
-- Stateful frames with sequence numbers, so packet loss does not leave held
-  keys stuck.
-- 10+ simultaneous key states in a single datagram.
-- JSON layout save/load through `GET /api/layouts/:name` and
-  `PUT /api/layouts/:name`.
-- iOS client foundation in `ios/RemotePadClient`.
+## Features
 
-The local server decode/dispatch target is sub-1ms. End-to-end iOS/Wi-Fi/input
-injection latency depends on hardware, OS scheduling, network contention, and
-the selected backend, so measure on the target device before relying on a
-specific latency number.
+- Stateful UDP frames with sequence numbers and up to 32 simultaneous keys per datagram, so packet loss never leaves a key stuck
+- Two frame kinds: `KeyEvent` (single press/release) and `KeyState` (full set of held keys)
+- `enigo` backend for real keyboard injection, `noop` backend for protocol QA and latency measurement
+- Layout JSON API: `GET`/`PUT /api/layouts/{name}`, `POST /api/clients/connect`, `GET /api/stats`, `GET /healthz`
+- Web layout editor (Solid + Tailwind + Vite): drag/resize controls, inspector, keyboard shortcuts, browser-side JSON import/export
+- `remotepad-qa` binary that sends test frames to a running server
+- iOS: `RemotePadClient` Swift package (protocol, key-code mapping, HTTP + UDP senders, unit tests) and `RemotePadApp` SwiftUI wrapper with lock mode and haptics
+- GitHub Actions: fmt/clippy/test/typecheck CI; `v*` tags build Linux/macOS/Windows binaries and an unsigned iOS IPA
 
-## Prerequisites
+## How it works
 
-- Rust 1.88 or newer.
-- Node.js 22 or newer for the layout editor build.
-- Swift toolchain for the iOS package tests.
-- OS input permissions when running `--backend enigo`.
+- `src/protocol.rs` defines the wire format (magic byte `0x52`, versioned header, sequence, client timestamp, frame kind, key list) and encode/decode with tests in `tests/protocol.rs`.
+- `src/udp.rs` reads datagrams on the UDP socket, validates sequence order, and forwards key changes to `src/input.rs`, which diffs against the current held set and calls the backend (`enigo` or `noop`); `src/keymap.rs` maps DOM `KeyboardEvent.code` names to Windows scan codes used on the wire.
+- `src/http.rs` (axum) serves the built editor from `--public-dir`, exposes the layout and stats API, and logs client connects; `src/layout.rs` validates layout JSON; `src/paths.rs` resolves the layout directory relative to the executable or cwd; `src/stats.rs` tracks counters shown by `/api/stats`.
+- `web/src/` is the editor: `App.tsx`, `useEditor.ts`, `geometry.ts` (tests in `geometry.test.ts`), `components/` (CanvasView, Inspector, Toolbar, TopBar), `api.ts` for the layout endpoints.
+- The iOS app calls `POST /api/clients/connect`, fetches `GET /api/layouts/default`, and then streams frames over UDP.
 
-## Install
+## Tech stack
+
+- Server: Rust 2024 (MSRV 1.88), tokio, axum 0.8, tower-http, enigo 0.6, clap, serde, tracing
+- Editor: Solid 1.9, Tailwind 3, Vite 6, TypeScript 5.7, Zod, Vitest, Playwright (dev dependency)
+- iOS: Swift Package (`ios/RemotePadClient`), XcodeGen-generated app (`ios/RemotePadApp`)
+- CI/CD: `.github/workflows/ci.yml`, `.github/workflows/release.yml`
+
+## Getting started
+
+### Requirements
+
+- Rust 1.88+ (pinned in `rust-toolchain.toml`)
+- Node.js 22+ for the editor
+- Swift toolchain / Xcode + XcodeGen for the iOS pieces
+- OS input permissions for the `enigo` backend (Accessibility on macOS)
+
+### Install
 
 ```bash
 git clone https://github.com/eunhhu/remotepad.git
 cd remotepad
 npm ci
-npm run build
+npm run build           # editor → web/dist
+cargo build --release
 ```
 
-## Run
+Pre-built binaries and an unsigned IPA are attached to [GitHub Releases](https://github.com/eunhhu/remotepad/releases).
+
+### Run
 
 ```bash
-cargo run --bin remotepad -- \
-  --backend enigo \
-  --layout-dir layouts \
-  --public-dir web/dist
+cargo run --bin remotepad -- --backend enigo --layout-dir layouts --public-dir web/dist
+cargo run --bin remotepad -- --backend enigo --port 3001      # HTTP and UDP on the same port number
+cargo run --bin remotepad -- --backend enigo --load save.json # edit/save a specific layout file
+cargo run --bin remotepad -- --backend noop                   # QA without injecting input
 ```
 
-Default ports are HTTP editor `3000` and UDP input `3001`. Use `--port 3001`
-when you want the editor and UDP socket on the same port number:
+Defaults: HTTP editor on `3000`, UDP input on `3001`. Open `http://<host-ip>:3000/` for the editor (or `npm run dev` for the Vite dev server on `5173` with API proxying).
+
+Send QA frames:
 
 ```bash
-cargo run --bin remotepad -- --backend enigo --port 3001
+cargo run --bin remotepad-qa -- --target 127.0.0.1:3001 --key KeyZ --key KeyX
 ```
 
-`enigo` is the default backend. Use `--backend noop` only for protocol QA,
-layout work, and latency measurement without sending real key events.
-
-Open `http://<host-ip>:3000/` for the layout editor after `npm run build`.
-
-Load and edit a specific layout JSON file:
+Tests:
 
 ```bash
-cargo run --bin remotepad -- --backend enigo --load save.json
-```
-
-With `--load save.json`, the web editor reads `save.json` as the default layout
-and saves edits back to that file.
-
-## Develop
-
-Run the Rust server:
-
-```bash
-cargo run --bin remotepad -- --backend noop
-```
-
-Run the Vite editor with API proxying to the Rust server:
-
-```bash
-npm run dev
-```
-
-Then open `http://localhost:5173/`.
-
-## Layout JSON
-
-Layouts are stored under `--layout-dir` as `<name>.json`. The editor reads and
-writes `default` by default, which maps to `layouts/default.json`.
-
-```json
-{
-  "canvasSize": {
-    "width": "820px",
-    "height": "420px"
-  },
-  "controls": [
-    {
-      "type": "Button",
-      "left": "32px",
-      "top": "272px",
-      "width": "88px",
-      "height": "88px",
-      "borderRadius": "18px",
-      "transform": "",
-      "key": "KeyZ"
-    }
-  ]
-}
-```
-
-Supported control types:
-
-- `Button`
-- `Joystick`
-- `MouseZone`
-
-The editor also supports local JSON import/export in the browser.
-
-## UDP Protocol
-
-The binary UDP protocol lives in `src/protocol.rs`; `remotepad-qa` can send QA
-frames to a running server.
-
-```bash
-cargo run --bin remotepad-qa -- \
-  --target 127.0.0.1:3001 \
-  --key KeyZ \
-  --key KeyX
-```
-
-When targeting another machine on the LAN, use that machine's host IP:
-
-```bash
-cargo run --bin remotepad-qa -- --target 192.168.0.100:3001
-```
-
-The QA sender binds to `0.0.0.0:0` by default, so it can send to LAN targets.
-Use `--bind <ip:port>` only when you need a specific local interface.
-
-## Test
-
-```bash
-npm run typecheck
-npm test
-npm run build
+npm run typecheck && npm test && npm run build
 cargo fmt --all -- --check
 cargo clippy --all-targets --all-features -- -D warnings
 cargo test --all-targets
@@ -153,46 +83,46 @@ xcodegen generate --spec ios/RemotePadApp/project.yml
 xcodebuild -project ios/RemotePadApp/RemotePad.xcodeproj -target RemotePad -configuration Debug -sdk iphonesimulator build
 ```
 
-## iOS App
+## Layout JSON
 
-`ios/RemotePadClient` is the tested Swift client library. `ios/RemotePadApp`
-is an installable SwiftUI wrapper app generated with XcodeGen.
+Stored under `--layout-dir` as `<name>.json`; the editor uses `default` → `layouts/default.json`.
 
-In the app, enter the Windows host LAN IP, not `127.0.0.1`. The app first calls
-`POST /api/clients/connect`, then fetches the current default layout from
-`GET /api/layouts/default`. The server logs the HTTP connect event and the
-first UDP datagram from each client.
-
-```bash
-cd ios/RemotePadApp
-xcodegen generate
-xcodebuild -project RemotePad.xcodeproj -target RemotePad -configuration Debug -sdk iphonesimulator build
+```json
+{
+  "canvasSize": { "width": "820px", "height": "420px" },
+  "controls": [
+    { "type": "Button", "left": "32px", "top": "272px", "width": "88px", "height": "88px",
+      "borderRadius": "18px", "transform": "", "key": "KeyZ" }
+  ]
+}
 ```
 
-Device IPA export requires a valid Apple account or a matching provisioning
-profile for `com.eunhhu.remotepad`. Without that, Xcode can compile the app but
-iOS will reject installation because the app cannot be code-signed.
+Control types: `Button`, `Joystick`, `MouseZone`.
 
-## Project Layout
+## Project structure
 
 ```text
-remotepad/
-├─ src/                 Rust server, UDP protocol, input backend
-├─ src/bin/             QA sender binary
-├─ tests/               Rust integration tests
-├─ web/                 Solid + Tailwind + Vite layout editor
-├─ ios/RemotePadClient/ Swift UDP client package
-├─ Cargo.toml
-├─ package.json
-└─ vite.config.ts
+src/            server: main.rs, http.rs, udp.rs, protocol.rs, input.rs, keymap.rs, layout.rs, paths.rs, stats.rs
+src/bin/        remotepad-qa.rs
+tests/          protocol, keymap, stats integration tests
+web/            Solid + Tailwind + Vite layout editor
+ios/RemotePadClient/   Swift client package with tests
+ios/RemotePadApp/      SwiftUI app (XcodeGen project.yml, ExportOptions.plist)
+.github/workflows/     ci.yml, release.yml
 ```
+
+## Configuration
+
+Flags: `--port`, `--http-addr`, `--udp-addr`, `--layout-dir` (default `layouts`), `--load`, `--public-dir` (default `web/dist`), `--backend enigo|noop`. Logging level via `RUST_LOG`.
 
 ## Security
 
-The layout API and UDP input socket are unauthenticated LAN tools. Do not run
-`remotepad` on an untrusted network. Bind to `127.0.0.1` or firewall the ports
-when you need a smaller surface.
+The layout API and UDP socket are unauthenticated LAN tools. Do not expose them on untrusted networks; bind to `127.0.0.1` or firewall the ports when in doubt.
+
+## History
+
+The repository started in 2024 as an Express/TypeScript web keypad with HTML editor pages (`public/editor.html`, `mouse.html`, `game.html`, gyro experiments); that code was replaced by the Rust server and Solid editor in the `feat: replace legacy web UI with UDP layout editor` commit.
 
 ## License
 
-`remotepad` is released under the [ISC License](LICENSE).
+[ISC](LICENSE).
